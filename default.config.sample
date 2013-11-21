@@ -36,7 +36,8 @@
     {lager, [
         {handlers, [
             {lager_console_backend, info},
-            {lager_file_backend, [{file, "log/urusai.log"}, {level, '=info'}]},
+            {lager_file_backend, [{file, "log/urusai.log"}, {level, '=info'}, {formatter, lager_default_formatter},
+                {formatter_config, [date, " ", time," ",pid, " ", message, "\n"]}]},
             %% If you need to log complete debug information, uncomment the following string
             % {lager_file_backend, [{file, "log/debug.log"}, {level, '=debug'}]},
             {lager_file_backend, [{file, "log/error.log"}, {level, error}]},
