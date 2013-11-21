@@ -7,13 +7,13 @@
 %% Start work with backend and return PID or other identifier used for further interaction
 run(Config) ->
     {ok, dets_db} = dets:open_file(dets_db,
-        [{file, proplists:get_value(file, Config)}, {type, set}]),
+        [{file, proplists:get_value(file, Config)}, {type, set}, {ram_file, true}]),
     dets_db.
 
 %% Put value to database
 set(Ref, Key, Value) ->
     case dets:insert(Ref, {Key, Value}) of
-        true -> ok;
+        true -> dets:sync(Ref), ok;
         _    -> error
     end.
 
