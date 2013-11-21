@@ -8,8 +8,8 @@ Software requirements
 ---------------------
 
   * **Erlang R16B** or newer
-  * **Rebar** in any directory from ``$PATH`` for building (it's compiled binary is provided with this repo)
   * **Python 2.7.x**
+  * **autotools** and **rebar** for building
 
 
 External dependencies
