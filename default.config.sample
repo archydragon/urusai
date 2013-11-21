@@ -1,0 +1,59 @@
+%% Example of configuration file for Urusai bot
+
+[
+    %% Bot configuration
+    {urusai, [
+        {common, [
+            %% 'owner' — main bot owner's JID. Cannot be deleted from owners list via 'owner del' command
+            {owner, "darkmaster@jabber.org"},
+            %% Pooler's pool change; if changed, be aware that you've changed pool name in Pooler configuration!
+            {pool_name, terrarium}
+        ]},
+        {auth, [
+            %% Authentication credentials
+            {login, "urusai@jabber.org"},
+            % {server, []},
+            % {port, 5222},
+            {password, "shine!!!"},
+            %% XMPP resource
+            {resource, "bottie"}
+        ]},
+        {database, [
+            %% Used database backend, currently only 'dets' is supported
+            {backend, dets},
+            %% Backend configuration
+            {config, [
+                {file, "urusai.db"}
+            ]}
+        ]},
+        {muc, [
+            %% Default nick for MUCs
+            {default_nick, "Urusai!"}
+        ]}
+    ]},
+
+    %% Lager configuration
+    {lager, [
+        {handlers, [
+            {lager_console_backend, info},
+            {lager_file_backend, [{file, "log/urusai.log"}, {level, '=info'}]},
+            %% If you need to log complete debug information, uncomment the following string
+            % {lager_file_backend, [{file, "log/debug.log"}, {level, '=debug'}]},
+            {lager_file_backend, [{file, "log/error.log"}, {level, error}]},
+            {lager_file_backend, [{file, "log/console.log"}, {level, info}]}
+        ]}
+    ]},
+
+    %% Pooler configuration
+    %% Current configuration starts
+    {pooler, [
+        {pools, [
+            %% If pool name is changed, be aware that you've changed 'pool_name' in 'common' section for bot
+            [{name, terrarium},
+             {group, python},
+             {max_count, 32},
+             {init_count, 4},
+             {start_mfa, {urusai_pool_member, start_link, []}}]
+        ]}
+    ]}
+].

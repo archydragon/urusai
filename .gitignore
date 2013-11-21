@@ -1,0 +1,7 @@
+deps
+ebin
+log
+erl_crash.dump
+dev.config
+*.db
+*.pyc

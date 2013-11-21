@@ -1,0 +1,7 @@
+#!/bin/sh
+
+git clone https://github.com/processone/exmpp.git $1
+cd $1
+autoreconf -vi
+./configure
+make

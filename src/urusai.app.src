@@ -1,0 +1,12 @@
+{application, urusai,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { urusai_app, []}},
+  {env, []}
+ ]}.
