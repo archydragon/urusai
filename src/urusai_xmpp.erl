@@ -137,6 +137,12 @@ parse_packet(Session, Packet) ->
 %% MUC message handler
 handle_muc_message(Session, Packet) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, <<"unknown">>),
+    [Muc, User] = binary:split(From, <<"/">>),
+    handle_muc_message(Session, Packet, From, urusai_db:get(<<"muc_nick_", Muc/binary>>) =:= User).
+
+handle_muc_message(_Session, _Packet, _From, true) ->
+    ok;
+handle_muc_message(Session, Packet, From, false) ->
     Me = exmpp_xml:get_attribute(Packet, <<"to">>, <<"unknown">>),
     Command = exmpp_message:get_body(Packet),
     case urusai_plugin:match(mucmessage, From, [], [Command]) of
