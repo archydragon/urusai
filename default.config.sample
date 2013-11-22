@@ -21,12 +21,23 @@
             {resource, "bottie"}
         ]},
         {database, [
-            %% Used database backend, currently only 'dets' is supported
+            %% Currently supported database backend: dets, redis
+            %% DETS backend configuration example
             {backend, dets},
-            %% Backend configuration
             {config, [
                 {file, "urusai.db"}
             ]}
+            %% Redis configuration example (uncomment it and comment other backend sections to use)
+            % {backend, redis},
+            % {config, [
+            %     %% Uncomment required Redis configuration options
+            %     % {host, "127.0.0.1"},
+            %     % {port, 6379},
+            %     % {password, "hackme"},
+            %     % {database, 0},
+            %     %% 'hash_name' should be set!
+            %     {hash_name, "urusai"}
+            % ]}
         ]},
         {muc, [
             %% Default nick for MUCs

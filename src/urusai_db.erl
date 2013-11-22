@@ -50,10 +50,10 @@ init(_Args) ->
     {ok, {Module, Session}}.
 
 handle_call({set, Key, Value}, _From, {Module, Session}) ->
-    Reply = Module:set(Session, Key, Value),
+    Reply = Module:set(Session, Key, term_to_binary(Value)),
     {reply, Reply, {Module, Session}};
 handle_call({get, Key}, _From, {Module, Session}) ->
-    Reply = Module:get(Session, Key),
+    Reply = binary_to_term(Module:get(Session, Key)),
     {reply, Reply, {Module, Session}};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.

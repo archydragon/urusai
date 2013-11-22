@@ -21,7 +21,7 @@ set(Ref, Key, Value) ->
 get(Ref, Key) ->
     case dets:lookup(Ref, Key) of
         [{Key, Value}] -> Value;
-        _ -> []
+        _ ->              <<131,106>> % empry list
     end.
 
 %% Required actions before DB interface process is stopped
