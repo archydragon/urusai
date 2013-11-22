@@ -13,7 +13,9 @@
             %% Authentication credentials
             {login, "urusai@jabber.org"},
             % {server, []},
-            % {port, 5222},
+            %% To protect your session using SSL uncomment the following two lines (make sure you're using correct port for your server)
+            % {ssl, true},
+            % {port, 5223},
             {password, "shine!!!"},
             %% XMPP resource
             {resource, "bottie"}

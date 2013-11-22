@@ -85,7 +85,11 @@ connect() ->
     lager:info("Trying to connect as ~s@~s to the server ~s:~B", [User, Server, ConnServer, Port]),
     urusai_db:set(<<"current_jid">>, JID), % required for alerts
     exmpp_session:auth_basic_digest(Session, JID, Password),
-    {ok, _Stream} = exmpp_session:connect_TCP(Session, ConnServer, Port),
+    ConnectMethod = case urusai_config:get(auth, ssl) of
+        true  -> connect_SSL;
+        false -> connect_TCP
+    end,
+    {ok, _Stream} = exmpp_session:ConnectMethod(Session, ConnServer, Port),
     exmpp_session:login(Session),
     lager:info("Connected."),
     update_status(Session),
