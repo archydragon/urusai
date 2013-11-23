@@ -110,7 +110,6 @@ get_plugins() ->
         ets:new(T, [duplicate_bag, named_table])
     end, ?pluginTypes),
     Loaded = format_plugins(RawPlugins),
-    lager:info("Loaded: ~p", [Loaded]),
     Triggers = lists:sum(lists:flatten(Loaded)),
     ModFound = length(RawPlugins),
     ModUsed = length(lists:filter(fun(E) -> E =/= 0 end, Loaded)),

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import urusai_plugin
 import re
 import time

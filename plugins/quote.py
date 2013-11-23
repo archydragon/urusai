@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import urusai_plugin
 import os
 import re
@@ -20,11 +22,11 @@ class pluginQuote(urusai_plugin.MucMessage):
     """
     Chat quotes.
     Usage:
-        "aq <QUOTE TEXT>" - add quote
-        "q" - get random quote
-        "q 42" - get the quote number 42
-        "q lol" - get the first quote containing 'lol' text
-        "dq 13" - delete the quote number 13
+        "aq <QUOTE TEXT>" — add quote
+        "q" — get random quote
+        "q 42" — get the quote number 42
+        "q lol" — get the first quote containing 'lol' text
+        "dq 13" — delete the quote number 13
     """
 
     triggers = {

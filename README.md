@@ -75,6 +75,8 @@ All the plugins are stored in modules with ``.py`` or ``.pyc`` extension under `
 Example of plugin module source code:
 
 ```python
+# -*- coding: utf-8 -*-
+
 import urusai_plugin # required for plugin correct work
 from datetime import datetime
 
