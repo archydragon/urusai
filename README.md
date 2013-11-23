@@ -1,5 +1,5 @@
-Urusai 0.0.1
-============
+Urusai 0.0.2-dev
+================
 
 Jabber (XMPP) bot with extendability using Python plugins.
 
@@ -19,6 +19,9 @@ External dependencies
   * [erlport](https://github.com/hdima/erlport)
   * [pooler](https://github.com/seth/pooler)
   * [lager](https://github.com/basho/lager)
+  * [cowboy](https://github.com/extend/cowboy)
+  * [jsonx](https://github.com/iskra/jsonx)
+  * [eredis](https://github.com/wooga/eredis)
 
 
 Installation
@@ -119,11 +122,42 @@ All other classes and methods inside modules are not parsed and may be used for 
 More plugin examples are available under [``plugins`` directory](https://github.com/Mendor/urusai/tree/master/plugins) of this repo.
 
 
+HTTP API
+--------
+
+Allows sending messages via bot from outer world. The default API URL is [http://localhost:8011/api](http://localhost:8011/api), port and location could be changed via configuration file.
+
+To send private message via bot you should send the following JSON in POST request body:
+
+```javascript
+{"type":   "message",
+ "target": "victim@jabber.org",
+ "body":   "Hello from HTTP API"}
+```
+
+If you're sending valid JSON, you will receive:
+
+```javascript
+{"result":"ok","message":"sent"}
+```
+
+Otherwise the result will be ``"error"`` with the details in ``"message"`` field.
+
+**Allowed types:**
+
+  * ``message`` for direct message sending
+  * ``plugin`` to pass message body via plugin mechanism
+
+**Allowed targets:**
+
+  * ``jid@server.org`` — send message directly to this JID
+  * ``room@conference.server.org`` — send message to MUC (if you're sending ``plugin`` typed message to MUC, MUC plugins will be applied)
+  * ``room@conference.server.org/Interlocutor`` — send private message to user Interlocutor from MUC room@
+
+
 TODO
 ----
 
-  * SSL!
-  * HTTP API
   * MUC autorejoin
   * passing real JIDs from conferences to plugins
   * MUC presence plugins API

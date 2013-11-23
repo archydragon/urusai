@@ -1,6 +1,7 @@
 ## 0.0.2-dev
 
   * SSL
+  * HTTP API
   * Redis supported as database backend
 
 ## 0.0.1
