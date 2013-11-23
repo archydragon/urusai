@@ -2,8 +2,20 @@
 
   * SSL
   * HTTP API
-  * Redis supported as database backend
+  * Redis is supported as database backend
+  * ``http`` plugin
+  * ``quote`` plugin
+  * Fixed errors appearing during plugins usage
+  * Optimize DETS backend responsibility
 
 ## 0.0.1
 
-Initial release.
+  * Initial release
+  * Digest MD5 authentication support
+  * Database backend API
+  * Support DETS as database backend
+  * Ownership mechanism
+  * Autosave and autojoin conferences when started
+  * Python plugin API
+  * ``isdown`` plugin
+  * ``currency`` plugin
