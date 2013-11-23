@@ -1,3 +1,5 @@
+%%% API HTTP handler
+%%% 
 -module (urusai_http_handler).
 
 -behaviour (cowboy_http_handler).
@@ -18,6 +20,7 @@ handle(Req, State) ->
 terminate(_Reason, _Req, _State) ->
     ok.
 
+%% Parse HTTP request
 reply(Req, <<"POST">>) ->
     {ok, ReqBody, _Req} = cowboy_req:body(Req),
     lager:info("Received HTTP API request: ~s", [ReqBody]),
@@ -34,13 +37,13 @@ reply(Req, <<"POST">>) ->
 reply(_Req, _) ->
     {405, <<>>}.
 
+%% Validate decoded data and try to call XMPP or plugin API
 call_xmpp(_Type, undefined, _Body) ->
     {error, target_not_set};
 call_xmpp(_Type, _Target, undefined) ->
     {error, body_not_set};
 call_xmpp(<<"message">>, Target, Body) ->
-    Result = gen_server:call(urusai_xmpp, {api_message, Target, Body}),
-    {ok, Result};
+    gen_server:call(urusai_xmpp, {api_message, Target, Body});
 call_xmpp(<<"plugin">>, Target, Body) ->
     gen_server:call(urusai_xmpp, {api_plugin, Target, Body});
 call_xmpp(_Type, _Target, _Body) ->

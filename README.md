@@ -151,7 +151,7 @@ Otherwise the result will be ``"error"`` with the details in ``"message"`` field
 **Allowed targets:**
 
   * ``jid@server.org`` — send message directly to this JID
-  * ``room@conference.server.org`` — send message to MUC (if you're sending ``plugin`` typed message to MUC, MUC plugins will be applied)
+  * ``room@conference.server.org`` — send message to MUC (if you're sending ``plugin`` typed message to MUC, MUC plugins will be applied); you should be joined MUC to send messages there
   * ``room@conference.server.org/Interlocutor`` — send private message to user Interlocutor from MUC room@
 
 

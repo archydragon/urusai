@@ -286,38 +286,49 @@ alert(Session, Msg) ->
     [ send_packet(Session, make_private_packet(Me, O, Msg)) || O <- urusai_db:get(<<"owners">>) ].
 
 %% ----------------------------------------
-%% HTTP API
+%% HTTP API handlers
 %% ----------------------------------------
 
 %% Handler for HTTP API messages
 api_message(Session, Target, Body) ->
-    Packet = make_api_packet(Target, Body, target_type(Target)),
-    send_packet(Session, Packet),
-    sent.
+    case make_api_packet(Target, Body, target_type(Target)) of
+        not_joined ->
+            {error, not_joined};
+        Packet ->
+            send_packet(Session, Packet),
+            {ok, sent}
+    end.
 
 %% Handler for HTTP API plugin requests
 api_plugin(Session, Target, Body) ->
-    Type = target_type(Target),
+    {Joined, Type} = target_type(Target),
+    api_plugin(Session, Target, Body, Type, Joined).
+
+api_plugin(_Session, _Target, _Body, _Type, false) ->
+    {error, not_joined};
+api_plugin(Session, Target, Body, Type, true) ->
     case urusai_plugin:match(Type, Target, [], [Body]) of
-        none -> 
+        none ->
             {error, no_appropriate_plugins};
         Replies ->
-            [send_packet(Session, make_api_packet(Target, E, Type)) || E <- Replies],
+            [send_packet(Session, make_api_packet(Target, E, {true, Type})) || E <- Replies],
             {ok, sent}
     end.
 
 %% Create packet for API messages
-make_api_packet(Target, Body, private) ->
+make_api_packet(_Target, _Body, {false, _}) ->
+    not_joined;
+make_api_packet(Target, Body, {_, private}) ->
     make_private_packet(current_jid(), Target, Body);
-make_api_packet(Target, Body, mucmessage) ->
+make_api_packet(Target, Body, {_, mucmessage}) ->
     make_muc_packet(current_jid(), Target, Body).
 
 %% Get target type from JID
 target_type(Target) ->
     case {binary:match(Target, <<"@conference">>), binary:split(Target, <<"/">>)} of
-        {nomatch, _}  -> private;
-        {_, [Target]} -> mucmessage;
-        _             -> private
+        {nomatch, _}  -> {true, private};
+        {_, [Target]} -> {is_joined(Target), mucmessage};
+        _             -> {is_joined(Target), private}
     end.
 
 %% ----------------------------------------
@@ -332,6 +343,12 @@ current_jid() ->
 is_owner(Jid) ->
     Bare = exmpp_jid:bare_to_list(exmpp_jid:bare(exmpp_jid:parse(Jid))),
     lists:member(Bare, urusai_db:get(<<"owners">>)).
+
+%% Am I joined to this MUC?
+is_joined(Jid) ->
+    Muc = exmpp_jid:bare_to_binary(exmpp_jid:bare(exmpp_jid:parse(Jid))),
+    MUCs = urusai_db:get(<<"autojoin">>),
+    lists:member(Muc, MUCs).
 
 %% Update status message trigger
 status_message(Session, Msg) ->
