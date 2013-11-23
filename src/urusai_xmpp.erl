@@ -45,6 +45,10 @@ handle_call({muc_nick, Muc, Nick}, _From, State) ->
     {reply, muc_nick(State, Muc, Nick), State};
 handle_call({status, Message}, _From, State) ->
     {reply, status_message(State, Message), State};
+handle_call({api_message, Target, Body}, _From, State) ->
+    {reply, api_message(State, Target, Body), State};
+handle_call({api_plugin, Target, Body}, _From, State) ->
+    {reply, api_plugin(State, Target, Body), State};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
@@ -278,12 +282,51 @@ make_private_packet(From, To, Body) ->
 %% Send alert 
 alert(Session, Msg) ->
     lager:error("Alert: ~s", [Msg]),
-    Me = exmpp_jid:bare_to_binary(urusai_db:get(<<"current_jid">>)),
+    Me = current_jid(),
     [ send_packet(Session, make_private_packet(Me, O, Msg)) || O <- urusai_db:get(<<"owners">>) ].
+
+%% ----------------------------------------
+%% HTTP API
+%% ----------------------------------------
+
+%% Handler for HTTP API messages
+api_message(Session, Target, Body) ->
+    Packet = make_api_packet(Target, Body, target_type(Target)),
+    send_packet(Session, Packet),
+    sent.
+
+%% Handler for HTTP API plugin requests
+api_plugin(Session, Target, Body) ->
+    Type = target_type(Target),
+    case urusai_plugin:match(Type, Target, [], [Body]) of
+        none -> 
+            {error, no_appropriate_plugins};
+        Replies ->
+            [send_packet(Session, make_api_packet(Target, E, Type)) || E <- Replies],
+            {ok, sent}
+    end.
+
+%% Create packet for API messages
+make_api_packet(Target, Body, private) ->
+    make_private_packet(current_jid(), Target, Body);
+make_api_packet(Target, Body, mucmessage) ->
+    make_muc_packet(current_jid(), Target, Body).
+
+%% Get target type from JID
+target_type(Target) ->
+    case {binary:match(Target, <<"@conference">>), binary:split(Target, <<"/">>)} of
+        {nomatch, _}  -> private;
+        {_, [Target]} -> mucmessage;
+        _             -> private
+    end.
 
 %% ----------------------------------------
 %% Other
 %% ----------------------------------------
+
+%% Get my current JID
+current_jid() ->
+    exmpp_jid:bare_to_binary(urusai_db:get(<<"current_jid">>)).
 
 %% Is JID on owners list?
 is_owner(Jid) ->

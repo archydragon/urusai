@@ -10,9 +10,14 @@ start() ->
     application:start(sasl),
     application:start(ssl),
     application:start(exmpp),
-    application:start(urusai).
+    application:start(urusai),
+    application:start(ranch),
+    application:start(cowboy),
+    urusai_http:start().
 
 stop() ->
+    application:stop(cowboy),
+    application:stop(ranch),
     application:stop(urusai),
     application:stop(exmpp),
     application:stop(ssl),

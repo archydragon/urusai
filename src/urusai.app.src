@@ -1,11 +1,17 @@
 {application, urusai,
  [
-  {description, ""},
-  {vsn, "1"},
+  {description, "extendable XMPP bot"},
+  {vsn, "0.0.2-dev"},
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  pooler,
+                  crypto,
+                  sasl,
+                  ssl,
+                  public_key,
+                  exmpp
                  ]},
   {mod, { urusai_app, []}},
   {env, []}

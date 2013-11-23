@@ -42,6 +42,11 @@
         {muc, [
             %% Default nick for MUCs
             {default_nick, "Urusai!"}
+        ]},
+        %% HTTP API configuration
+        {http, [
+            {port, 8011},
+            {path, "/api"}
         ]}
     ]},
 
