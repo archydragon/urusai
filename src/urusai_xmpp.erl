@@ -230,11 +230,16 @@ presence_subscribe(Session, Recipient) ->
 %% ----------------------------------------
 
 make_muc_packet(Me, ConfUser, Body) ->
+    BodyX = try
+        exmpp_message:chat(Body)
+    catch _:_ ->
+        exmpp_message:chat(<<"Malformed packet body, possible error in some plugin output.">>)
+    end,
     To = exmpp_jid:bare_to_list(exmpp_jid:bare(exmpp_jid:parse(ConfUser))),
     exmpp_xml:set_attribute(
         exmpp_xml:set_attribute(
             exmpp_xml:set_attribute(
-                exmpp_message:chat(Body), <<"from">>, Me), <<"to">>, To), <<"type">>, <<"groupchat">>).
+                BodyX, <<"from">>, Me), <<"to">>, To), <<"type">>, <<"groupchat">>).
 
 muc_join(Session, Muc, Params) ->
     OldNick = urusai_db:get(<<"muc_nick_", Muc/binary>>),
@@ -275,9 +280,14 @@ muc_autojoin(Session) ->
 %% ----------------------------------------
 
 make_private_packet(From, To, Body) ->
+    BodyX = try
+        exmpp_message:chat(Body)
+    catch _:_ ->
+        exmpp_message:chat(<<"Malformed packet body, possible error in some plugin output.">>)
+    end,
     exmpp_xml:set_attribute(
         exmpp_xml:set_attribute(
-            exmpp_message:chat(Body), <<"from">>, From), <<"to">>, To).
+            BodyX, <<"from">>, From), <<"to">>, To).
 
 %% Send alert 
 alert(Session, Msg) ->
