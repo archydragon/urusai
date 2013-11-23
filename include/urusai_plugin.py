@@ -48,9 +48,12 @@ def getPlugins(module):
         pluginName = re.sub(r"^plugin(.*)", r"\1", className)
         if (pluginName != className):
             pluginType = Atom(plugins[className].super[0].name.lower())
-            i = __import__(module)
-            triggers = getattr(i, className).clsTriggers()
-            out.append((pluginName, pluginType, triggers))
+            try:
+                i = __import__(module)
+                triggers = getattr(i, className).clsTriggers()
+                out.append((pluginName, pluginType, triggers))
+            except:
+                return (Atom("bad_triggers"), className)
     return List(out)
 
 def getPluginsFromAll():

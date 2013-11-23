@@ -109,26 +109,34 @@ get_plugins() ->
         end,
         ets:new(T, [duplicate_bag, named_table])
     end, ?pluginTypes),
-    format_plugins(RawPlugins),
-    lager:info("Loaded ~p plugin modules", [length(RawPlugins)]),
+    Loaded = format_plugins(RawPlugins),
+    lager:info("Loaded: ~p", [Loaded]),
+    Triggers = lists:sum(lists:flatten(Loaded)),
+    ModFound = length(RawPlugins),
+    ModUsed = length(lists:filter(fun(E) -> E =/= 0 end, Loaded)),
+    lager:info("Found ~p modules, loaded ~p of them (~p triggers)", [ModFound, ModUsed, Triggers]),
     ok.
 
 %% Format raw output from Python function to records
 format_plugins(Raw) ->
     [ format_plugins(M, Body) || {M, Body} <- Raw ].
 
+format_plugins(Module, {bad_triggers, C}) ->
+    lager:error("Failed to load triggers from plugin class '~s' (module '~s')", [C, Module]),
+    0;
 format_plugins(Module, Raw) ->
     [ format_plugins(Module, C, Type, Body) || {C, Type, Body} <- Raw ].
 
 format_plugins(Module, Class, _, notriggers) ->
     lager:error("Plugin \"~s\" (module '~s') has no triggers.", [Class, Module]),
-    ok;
+    0;
 format_plugins(Module, Class, Type, Raw) ->
     [ add_plugin(Type, #plugin{
         trigger = Regex,
         module = bin_to_atom(Module),
         method = bin_to_atom(<<"plugin", Class/binary, ".", "trigger", Method/binary>>)})
-    || {Regex, Method} <- Raw ].
+    || {Regex, Method} <- Raw ],
+    length(Raw).
 
 %% Insert parsed plugin trigger details to appropriate ETS table
 add_plugin(Type, Plugin) ->

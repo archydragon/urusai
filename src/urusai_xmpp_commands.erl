@@ -57,7 +57,7 @@ cmd(<<"plugins">>, []) ->
 %% Reload plugins
 cmd(<<"plugins">>, [Action]) ->
     case Action of
-        <<"reload">> -> urusai_plugin:reload(), {ok, <<"Plugins reloading triggered.">>};
+        <<"reload">> -> urusai_plugin:reload(), {ok, <<"Plugins reloaded.">>};
         _ -> {ok, <<"Bad action.">>}
     end;
 %% Make possible to owners run PM plugins
