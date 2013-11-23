@@ -1,6 +1,7 @@
 deps
 ebin
 log
+var
 erl_crash.dump
 dev.config
 *.db
