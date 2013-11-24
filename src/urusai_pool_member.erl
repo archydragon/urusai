@@ -40,7 +40,7 @@ init({Lang, Args}) ->
 
 handle_call({call, M, F, A}, _From, {Lang, Pid}) ->
     Reply = try
-        Lang:call(Pid, M, F, A)
+        Lang:call(Pid, M, F, A, [{timeout, 60000}])
     catch error:{Lang, Class, Arg, Stacktrace} ->
         lager:error("Error in plugin '~p' (~p: ~p)", [M, Class, Arg]),
         lager:error("Stack trace: ~p", [Stacktrace]),

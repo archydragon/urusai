@@ -44,7 +44,11 @@ reload() ->
 
 %% Run Python function execution
 run(Module, Function, Args) ->
-    gen_server:call(?MODULE, {call, Module, Function, Args}).
+    try
+        gen_server:call(?MODULE, {call, Module, Function, Args}, 60000)
+    catch exit:{timeout, _} ->
+        list_to_binary(io_lib:format("Call to the method '~s' (module '~s') timed out.", [Function, Module]))
+    end.
 
 %% Get list of loaded plugins
 plugins() ->
@@ -144,7 +148,7 @@ add_plugin(Type, Plugin) ->
 %% Call for work one member from pool
 call_pool_member(M, F, A) ->
     P = take_pool_member(),
-    Reply = gen_server:call(P, {call, M, F, A}, 30000),
+    Reply = gen_server:call(P, {call, M, F, A}, 60000),
     pooler:return_member(urusai_config:get(common, pool_name), P),
     Reply.
 
