@@ -1,6 +1,7 @@
 ## 0.0.2-dev
 
   * SSL
+  * Join password protected MUC
   * HTTP API
   * Redis is supported as database backend
   * Pass real JIDs from conferences to plugins

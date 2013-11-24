@@ -45,7 +45,9 @@ init(_Args) ->
     spawn_link(?MODULE, connect, []),
     {ok, state}.
 handle_call({muc_join, Muc, Params}, _From, State) ->
-    {reply, muc_join(State, Muc, Params), State};
+    {reply, muc_join(State, Muc, Params, []), State};
+handle_call({muc_join_protected, Muc, Params}, _From, State) ->
+    {reply, muc_join_protected(State, Muc, Params), State};
 handle_call({muc_leave, Muc}, _From, State) ->
     {reply, muc_leave(State, Muc), State};
 handle_call({muc_nick, Muc, Nick}, _From, State) ->
@@ -249,21 +251,34 @@ make_muc_packet(Me, ConfUser, Body) ->
             exmpp_xml:set_attribute(
                 BodyX, <<"from">>, Me), <<"to">>, To), <<"type">>, <<"groupchat">>).
 
-muc_join(Session, Muc, Params) ->
+muc_join(Session, Muc, Params, PacketBody) ->
     OldNick = urusai_db:get(<<"muc_nick_", Muc/binary>>),
     Nick = case Params of
         [] when OldNick =:= [] -> list_to_binary(urusai_config:get(muc, default_nick));
         []                     -> OldNick;
         _                      -> list_to_binary(Params)
     end,
-    RP = exmpp_presence:set_status(exmpp_presence:available(), urusai_db:get(<<"status">>)),
-    Presence = exmpp_xml:set_attribute(RP, <<"to">>, <<Muc/binary, "/", Nick/binary>>),
+    Presence = muc_join_packet(Muc, Nick, PacketBody),
     send_packet(Session, Presence),
     lager:info("Joining MUC ~s as ~s", [Muc, Nick]),
     urusai_db:set(<<"autojoin">>, lists:usort(lists:append(urusai_db:get(<<"autojoin">>), [Muc]))),
     urusai_db:set(<<"muc_nick_", Muc/binary>>, Nick),
+    urusai_db:set(<<"muc_password_", Muc/binary>>, PacketBody),
     urusai_db:set(<<"muc_users_", Muc/binary>>, []),
     {ok, <<"Presence sent.">>}.
+
+muc_join_protected(_Session, _Muc, []) ->
+    {ok, <<"Please specify the password for joining password protected MUC.">>};
+muc_join_protected(Session, Muc, [Password]) ->
+    P = exmpp_xml:set_children(exmpp_xml:element('http://jabber.org/protocol/muc', x),
+        [exmpp_xml:set_cdata(exmpp_xml:element(password), Password)]),
+    muc_join(Session, Muc, [], [P]).
+
+muc_join_packet(Muc, Nick, Children) ->
+    RP = exmpp_xml:set_attribute(
+        exmpp_presence:set_status(exmpp_presence:available(), urusai_db:get(<<"status">>)),
+        <<"to">>, <<Muc/binary, "/", Nick/binary>>),
+    exmpp_xml:set_children(RP, Children).
 
 muc_leave(Session, Muc) ->
     RP = exmpp_presence:set_status(exmpp_presence:unavailable(), "kthxbye"),
@@ -282,7 +297,7 @@ muc_nick(Session, Muc, [Nick]) ->
     {ok, <<"Presence sent.">>}.
 
 muc_autojoin(Session) ->
-    [ muc_join(Session, A, []) || A <- urusai_db:get(<<"autojoin">>) ].
+    [ muc_join(Session, A, [], urusai_db:get(<<"muc_password_", A/binary>>)) || A <- urusai_db:get(<<"autojoin">>) ].
 
 muc_userjoined(Conf, Nick, Raw) ->
     muc_userjoined_save(Conf, Nick, muc_getdata(Raw)).

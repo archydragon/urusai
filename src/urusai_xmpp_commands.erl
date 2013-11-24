@@ -43,8 +43,8 @@ cmd(<<"muc">>, [Params]) ->
     [Action | [Tail]] = binary:split(Params, <<" ">>),
     [Muc | P] = binary:split(Tail, <<" ">>),
     gen_server:call(urusai_xmpp, case Action of
-        % TODO: implement support of password protected MUCs
         <<"join">>  -> {muc_join, Muc, P};
+        <<"pjoin">> -> {muc_join_protected, Muc, P};
         <<"leave">> -> {muc_leave, Muc};
         <<"nick">>  -> {muc_nick, Muc, P};
         % TODO: implement kick and ban triggers ^_^

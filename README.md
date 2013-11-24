@@ -59,7 +59,8 @@ Send to the bot subscription from JID set as owner in configuration file. Then y
   * ``owner list`` — list of bot's owners
   * ``owner add <JID>`` — add <JID> to owners list
   * ``owner del <JID>`` — remove <JID> from owners list (warning: all the owners have the same rights, but the main owner cannot be deleted from the list)
-  * ``muc join <MUC_ADDRESS>`` — join MUC
+  * ``muc join <MUC_ADDRESS> [<NICK>]`` — join MUC, custom nick may be set on this stage
+  * ``muc pjoin <MUC_ADDRESS> <PASSWORD>`` — join password protected MUC
   * ``muc leave <MUC_ADDRESS>`` — leave MUC
   * ``muc nick <MUC_ADDRESS>`` — change bot's shown nick for this MUC
   * ``plugins`` — list of loaded plugins' triggers information
