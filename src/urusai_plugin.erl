@@ -40,7 +40,7 @@ start_link() ->
 reload() ->
     application:stop(pooler),
     application:start(pooler),
-    gen_server:call(?MODULE, reload).
+    gen_server:call(?MODULE, reload, 60000).
 
 %% Run Python function execution
 run(Module, Function, Args) ->
