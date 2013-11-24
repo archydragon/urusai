@@ -215,7 +215,9 @@ handle_presence(Session, Packet, _Presence) ->
                     presence_subscribed(Session, JID),
                     presence_subscribe(Session, JID);
                 "error" ->
-                    alert(Session, <<"Failed to join MUC ", Conf/binary, "@", Serv/binary>>),
+                    M = <<Conf/binary, "@", Serv/binary>>,
+                    urusai_db:set(<<"autojoin">>, lists:delete(M, urusai_db:get(<<"autojoin">>))),
+                    alert(Session, <<"Failed to join MUC ", M/binary>>),
                     ok
             end
     end.
