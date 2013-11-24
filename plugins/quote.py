@@ -18,6 +18,21 @@ def checkFile(f):
             os.makedirs(d)
         open(f, 'w').close()
 
+def read_file(muc):
+    qfile = FILE.format(muc)
+    checkFile(qfile)
+    with open(qfile, 'rb') as f:
+        try:
+            return [item.decode('string_escape') for item in pickle.load(f)]
+        except EOFError:
+            return []
+
+def write_file(muc, lines):
+    qfile = FILE.format(muc)
+    with open(qfile, 'wb') as f:
+        pickle.dump(lines, f)
+    pass
+
 class pluginQuote(urusai_plugin.MucMessage):
     """
     Chat quotes.
@@ -38,21 +53,14 @@ class pluginQuote(urusai_plugin.MucMessage):
     @staticmethod
     def triggerAdd(fromName, fromJid, message):
         [muc, author] = fromName.split("/", 1)
-        qfile = FILE.format(muc)
         q_fmt = "{0}~%~{1}"
         reply_fmt = "Quote added (number {0})"
-        checkFile(qfile)
         r = re.compile(r"^aq\s(.+)", flags=re.MULTILINE|re.DOTALL)
         quote = re.match(r, message).group(1).encode('string_escape')
-        with open(qfile, 'rb') as f:
-            try:
-                lines = pickle.load(f)
-            except EOFError:
-                lines = []
+        lines = read_file(muc)
         lines.append(q_fmt.format(quote, author))
         number = len(lines)
-        with open(qfile, 'wb') as f:
-            pickle.dump(lines, f)
+        write_file(muc, lines)
         return reply_fmt.format(number)
 
     @staticmethod
@@ -60,13 +68,9 @@ class pluginQuote(urusai_plugin.MucMessage):
         reply_fmt = "[{0}/{1}] (added by {2})\n{3}"
         request = re.match(r"^q(\s(.+))?", message).group(2)
         [muc, author] = fromName.split("/", 1)
-        qfile = FILE.format(muc)
-        checkFile(qfile)
-        with open(qfile, 'rb') as f:
-            try:
-                lines = [item.decode('string_escape') for item in pickle.load(f)]
-            except EOFError:
-                return "No quotes added for this MUC."
+        lines = read_file(muc)
+        if not lines:
+            return "No quotes added for this MUC."
         count = len(lines)
         if not request:
             i = random.randint(0, count - 1)
@@ -92,17 +96,12 @@ class pluginQuote(urusai_plugin.MucMessage):
     def triggerDel(fromName, fromJid, message):
         reply_fmt = "Quote {0} deleted."
         request = int(re.match(r"^dq\s([0-9]+)?", message).group(1))
-        if request <= 0:
-            return "Quote not found."
         [muc, author] = fromName.split("/", 1)
-        qfile = FILE.format(muc)
-        checkFile(qfile)
-        with open(qfile, 'rb') as f:
-            try:
-                lines = pickle.load(f)
-            except EOFError:
-                return "No quotes added for this MUC."
+        lines = read_file(muc)
+        if not lines:
+            return "No quotes added for this MUC."
+        if request <= 0 or request > len(lines):
+            return "Quote not found."
         del lines[request - 1]
-        with open(qfile, 'wb') as f:
-            pickle.dump(lines, f)
+        write_file(muc, lines)
         return reply_fmt.format(request)
