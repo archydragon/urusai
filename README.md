@@ -99,7 +99,6 @@ class pluginTime(urusai_plugin.Private):
     # Trigger method should has three parameters:
     #   1st — JID or conference JID/nickname of message sender
     #   2nd — real JID of sender (used only for MUC plugins)
-    #         (not implemented yet)
     #   3rd — origin message body
     # Method should return string with the message which will be
     # send back to the user or MUC.
@@ -161,7 +160,6 @@ TODO
 ----
 
   * MUC autorejoin
-  * passing real JIDs from conferences to plugins
   * MUC presence plugins API
   * IQ handler
   * more features for plugin returning values

@@ -10,6 +10,13 @@
 -include_lib ("deps/exmpp/include/exmpp.hrl").
 -include_lib ("deps/exmpp/include/exmpp_client.hrl").
 
+-record (muc_member, {
+    nick = <<>>,
+    jid = <<>>,
+    affiliation = <<>>,
+    role = <<>>
+}).
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
@@ -145,7 +152,7 @@ parse_packet(Session, Packet) ->
 %% MUC message handler
 handle_muc_message(Session, Packet) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, <<"unknown">>),
-    [Muc, User] = binary:split(From, <<"/">>),
+    [Muc | User] = binary:split(From, <<"/">>),
     handle_muc_message(Session, Packet, From, urusai_db:get(<<"muc_nick_", Muc/binary>>) =:= User).
 
 handle_muc_message(_Session, _Packet, _From, true) ->
@@ -153,7 +160,7 @@ handle_muc_message(_Session, _Packet, _From, true) ->
 handle_muc_message(Session, Packet, From, false) ->
     Me = exmpp_xml:get_attribute(Packet, <<"to">>, <<"unknown">>),
     Command = exmpp_message:get_body(Packet),
-    case urusai_plugin:match(mucmessage, From, [], [Command]) of
+    case urusai_plugin:match(mucmessage, From, get_real_jid(From), [Command]) of
         none    -> ok;
         Replies -> [send_packet(Session, make_muc_packet(Me, From, E)) || E <- Replies]
     end.
@@ -177,7 +184,7 @@ handle_private(Session, Packet, true, Target, Me) ->
 %% Or if it has been sent by somebody else
 handle_private(Session, Packet, false, Target, Me) ->
     Command = exmpp_message:get_body(Packet),
-    case urusai_plugin:match(private, Target, [], [Command]) of
+    case urusai_plugin:match(private, Target, <<>>, [Command]) of
         none -> 
             send_packet(Session, make_private_packet(Me, Target, <<"No such command.">>));
         Replies ->
@@ -191,13 +198,14 @@ handle_iq(_Session, _Packet) ->
 
 %% Presence handler
 handle_presence(Session, Packet, _Presence) ->
-    case exmpp_jid:make({Conf, Serv, _Nick} = Packet#received_packet.from) of
+    case exmpp_jid:make({Conf, Serv, Nick} = Packet#received_packet.from) of
         JID ->
+            C = <<Conf/binary, "@", Serv/binary>>,
             case _Type = Packet#received_packet.type_attr of
                 "available" ->
-                    ok;
+                    muc_userjoined(C, Nick, Packet#received_packet.raw_packet);
                 "unavailable" ->
-                    ok;
+                    muc_userleft(C, Nick, Packet#received_packet.raw_packet);
                 "subscribe" ->
                     presence_subscribed(Session, JID),
                     presence_subscribe(Session, JID);
@@ -254,6 +262,7 @@ muc_join(Session, Muc, Params) ->
     lager:info("Joining MUC ~s as ~s", [Muc, Nick]),
     urusai_db:set(<<"autojoin">>, lists:usort(lists:append(urusai_db:get(<<"autojoin">>), [Muc]))),
     urusai_db:set(<<"muc_nick_", Muc/binary>>, Nick),
+    urusai_db:set(<<"muc_users_", Muc/binary>>, []),
     {ok, <<"Presence sent.">>}.
 
 muc_leave(Session, Muc) ->
@@ -274,6 +283,53 @@ muc_nick(Session, Muc, [Nick]) ->
 
 muc_autojoin(Session) ->
     [ muc_join(Session, A, []) || A <- urusai_db:get(<<"autojoin">>) ].
+
+muc_userjoined(Conf, Nick, Raw) ->
+    muc_userjoined_save(Conf, Nick, muc_getdata(Raw)).
+
+muc_userjoined_save(_Conf, _Nick, ok) ->
+    ok;
+muc_userjoined_save(Conf, Nick, {Jid, Affiliation, Role}) ->
+    User = #muc_member{
+        nick = Nick,
+        jid = Jid,
+        affiliation = Affiliation,
+        role = Role
+    },
+    MucK = <<"muc_users_", Conf/binary>>,
+    urusai_db:set(MucK, lists:append(urusai_db:get(MucK), [User])),
+    ok.
+
+muc_userleft(Conf, Nick, Raw) ->
+    muc_userleft_save(Conf, Nick, muc_getdata(Raw)).
+
+muc_userleft_save(_Conf, _Nick, ok) ->
+    ok;
+muc_userleft_save(Conf, Nick, {_Jid, _Affiliation, _Role}) ->
+    MucK = <<"muc_users_", Conf/binary>>,
+    urusai_db:set(MucK, lists:filter(fun(X) -> X#muc_member.nick =/= Nick end, urusai_db:get(MucK))),
+    ok.
+
+muc_getdata(Raw) ->
+    case exmpp_xml:get_element(exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), item) of
+        undefined ->
+            ok;
+        Data ->
+            list_to_tuple([ exmpp_xml:get_attribute(Data, A, <<>>)
+                || A <- [<<"jid">>, <<"affiliation">>, <<"role">>] ])
+    end.
+
+
+get_real_jid(MucJid) ->
+    case binary:split(MucJid, <<"/">>) of
+        [MucJid] ->
+            [];
+        [Conf, Nick] ->
+            MucK = <<"muc_users_", Conf/binary>>,
+            List = urusai_db:get(MucK),
+            [Result] = lists:filter(fun(X) -> X#muc_member.nick =:= Nick end, List),
+            Result#muc_member.jid
+    end.
 
 %% ----------------------------------------
 %% Private messages actions

@@ -3,6 +3,7 @@
   * SSL
   * HTTP API
   * Redis is supported as database backend
+  * Pass real JIDs from conferences to plugins
   * ``http`` plugin
   * ``quote`` plugin
   * Fixed errors appearing during plugins usage

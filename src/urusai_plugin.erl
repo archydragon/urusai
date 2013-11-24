@@ -144,7 +144,7 @@ add_plugin(Type, Plugin) ->
 %% Call for work one member from pool
 call_pool_member(M, F, A) ->
     P = take_pool_member(),
-    Reply = gen_server:call(P, {call, M, F, A}),
+    Reply = gen_server:call(P, {call, M, F, A}, 30000),
     pooler:return_member(urusai_config:get(common, pool_name), P),
     Reply.
 
