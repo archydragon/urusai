@@ -1,5 +1,5 @@
-Urusai 0.0.2-dev
-================
+Urusai 0.0.2
+============
 
 Jabber (XMPP) bot with extendability using Python plugins.
 
@@ -121,7 +121,7 @@ class pluginTimeChat(urusai_plugin.MucMessage):
 
 All other classes and methods inside modules are not parsed and may be used for coding convenience.
 
-*Plugin method execution time is limited to 60 seconds.*
+**Plugin method execution time is limited to 60 seconds.**
 
 More plugin examples are available under [``plugins`` directory](https://github.com/Mendor/urusai/tree/master/plugins) of this repo.
 

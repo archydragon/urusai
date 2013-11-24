@@ -1,4 +1,8 @@
-## 0.0.2-dev
+## 0.0.3-dev
+
+_Just releaset 0.0.2, stay tuned._
+
+## 0.0.2
 
   * SSL
   * Join password protected MUC
@@ -7,7 +11,7 @@
   * Pass real JIDs from conferences to plugins
   * ``http`` plugin
   * ``quote`` plugin
-  * Fixed errors appearing during plugins usage
+  * Fixed errors and crashes appearing during plugins usage
   * Plugin method execution is now limited to 60 seconds
   * Optimize DETS backend responsibility
 
