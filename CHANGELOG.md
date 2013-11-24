@@ -7,6 +7,7 @@
   * ``http`` plugin
   * ``quote`` plugin
   * Fixed errors appearing during plugins usage
+  * Plugin method execution is now limited to 60 seconds
   * Optimize DETS backend responsibility
 
 ## 0.0.1
