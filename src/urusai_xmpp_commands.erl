@@ -52,17 +52,17 @@ cmd(<<"muc">>, [Params]) ->
     end);
 %% List of loaded plugin triggers
 cmd(<<"plugins">>, []) ->
-    Plugins = urusai_plugin:plugins(),
-    {ok, io_lib:format("~p", [Plugins])};
+    {ok, <<"Allowed actions:\n\tlist\n\treload">>};
 %% Reload plugins
 cmd(<<"plugins">>, [Action]) ->
     case Action of
+        <<"list">>   -> {ok, io_lib:format("~p", [urusai_plugin:plugins()])};
         <<"reload">> -> urusai_plugin:reload(), {ok, <<"Plugins reloaded.">>};
-        _ -> {ok, <<"Bad action.">>}
+        _            -> {ok, <<"Bad action.">>}
     end;
 %% Make possible to owners run PM plugins
 cmd(<<"exec">>, Cmd) ->
-    So = urusai_plugin:match(private, "OWNER", [], Cmd),
+    So = urusai_plugin:match(private, <<"OWNER@NO/WHERE">>, [], Cmd),
     {ok, io_lib:format("~p", [So])};
 cmd(_, _) ->
     error.

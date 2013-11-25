@@ -1,5 +1,5 @@
-Urusai 0.0.2
-============
+Urusai 0.0.3-dev
+================
 
 Jabber (XMPP) bot with extendability using Python plugins.
 
@@ -49,8 +49,8 @@ Running
 Where ``default`` is the base name for your configuration (``default.config`` in this case).
 
 
-Bot management
---------------
+Control
+-------
 
 Send to the bot subscription from JID set as owner in configuration file. Then you may manage using the following commands:
 
@@ -63,9 +63,19 @@ Send to the bot subscription from JID set as owner in configuration file. Then y
   * ``muc pjoin <MUC_ADDRESS> <PASSWORD>`` — join password protected MUC
   * ``muc leave <MUC_ADDRESS>`` — leave MUC
   * ``muc nick <MUC_ADDRESS>`` — change bot's shown nick for this MUC
-  * ``plugins`` — list of loaded plugins' triggers information
+  * ``plugins list`` — list of loaded plugins' triggers information
   * ``plugins reload`` — reload plugins
   * ``exec <COMMAND>`` — execute private message plugin command
+
+After the bot joined MUC, the owners of MUC can manage its behaviour sending private messages inside the room:
+
+  * ``ping`` — guess, what?
+  * ``w`` — the name of room you are in
+  * ``plugins list`` — get list of loaded plugins and their state
+  * ``plugins toggle <PLUGIN>`` — toggle plugin enabled or disabled
+  * ``leave`` — force the bot to go out
+
+**Warning:** the plugins are unloaded automatically after plugin module file deletion and reloading plugins by the bot owner or full bot restart, but if you delete a file, reload plugins, put the file back and then reload plugins again, it will become active for all the MUCs it has been active for before deletion.
 
 
 Plugin API

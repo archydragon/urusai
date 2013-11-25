@@ -1,6 +1,7 @@
 ## 0.0.3-dev
 
-_Just releaset 0.0.2, stay tuned._
+  * A piece of control possibilities for MUCs' owners
+  * Load/unload plugins mechanism for MUCs
 
 ## 0.0.2
 

@@ -167,9 +167,10 @@ handle_muc_message(_Session, _Packet, _From, true) ->
 handle_muc_message(Session, Packet, From, false) ->
     Me = exmpp_xml:get_attribute(Packet, <<"to">>, <<"unknown">>),
     Command = exmpp_message:get_body(Packet),
-    case urusai_plugin:match(mucmessage, From, get_real_jid(From), [Command]) of
-        none    -> ok;
-        Replies -> [send_packet(Session, make_muc_packet(Me, From, E)) || E <- Replies]
+    Matched = urusai_plugin:match(mucmessage, From, get_real_jid(From), [Command]),
+    case lists:filter(fun(X) -> X =/= none end, Matched) of
+        []    -> ok;
+        Other -> [send_packet(Session, make_muc_packet(Me, From, E)) || E <- Other]
     end.
 
 %% Private message handler
@@ -204,7 +205,7 @@ handle_private(Session, Packet, true, false, Target, Me) ->
 handle_private(Session, Packet, false, _, Target, Me) ->
     Command = exmpp_message:get_body(Packet),
     case urusai_plugin:match(private, Target, <<>>, [Command]) of
-        none -> 
+        [none] -> 
             send_packet(Session, make_private_packet(Me, Target, <<"No such command.">>));
         Replies ->
             [send_packet(Session, make_private_packet(Me, Target, E)) || E <- Replies]
@@ -408,7 +409,7 @@ api_plugin(_Session, _Target, _Body, _Type, false) ->
     {error, not_joined};
 api_plugin(Session, Target, Body, Type, true) ->
     case urusai_plugin:match(Type, Target, [], [Body]) of
-        none ->
+        [none] ->
             {error, no_appropriate_plugins};
         Replies ->
             [send_packet(Session, make_api_packet(Target, E, {true, Type})) || E <- Replies],

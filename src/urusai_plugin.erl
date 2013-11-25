@@ -20,7 +20,7 @@
 
 -export ([start_link/0]).
 
--export ([run/3, plugins/0, match/4, reload/0]).
+-export ([plugins/0, plugins/1, match/4, reload/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -43,7 +43,9 @@ reload() ->
     gen_server:call(?MODULE, reload, 60000).
 
 %% Run Python function execution
-run(Module, Function, Args) ->
+run(Type, _Module, _Function, _Args, false) when Type =:= mucmessage ->
+    none;
+run(_Type, Module, Function, Args, _) ->
     try
         gen_server:call(?MODULE, {call, Module, Function, Args}, 60000)
     catch exit:{timeout, _} ->
@@ -54,13 +56,23 @@ run(Module, Function, Args) ->
 plugins() ->
     gen_server:call(?MODULE, plugins).
 
+plugins(Type) ->
+    gen_server:call(?MODULE, {plugins, Type}).
+
 %% Find matching triggers and execute appropriate Python functions
 match(Type, From, FromJID, [Value]) ->
+    [BaseJid | _] = binary:split(From, <<"/">>),
     % TODO: REWRITE
     Actions = ets:match(Type, '$1'), % select all from ETS table
     case [ A || #plugin{trigger = T} = A <- lists:flatten(Actions), re:run(Value, T) =/= nomatch ] of
-        []    -> none;
-        CanDo -> [ run(C#plugin.module, C#plugin.method, [From, FromJID, Value]) || C <- CanDo ]
+        []    -> [none];
+        CanDo -> [ run(
+                    Type,
+                    C#plugin.module,
+                    C#plugin.method,
+                    [From, FromJID, Value],
+                    lists:member(C#plugin.module, urusai_db:get(<<"muc_plugins_", BaseJid/binary>>))) 
+                 || C <- CanDo ]
     end.
 
 %% ------------------------------------------------------------------
@@ -76,6 +88,9 @@ handle_call({call, M, F, A}, _From, State) ->
     {reply, Reply, State};
 handle_call(plugins, _From, State) ->
     Reply = [ {T, ets:match(T, '$1')} || T <- ?pluginTypes ],
+    {reply, Reply, State};
+handle_call({plugins, Type}, _From, State) ->
+    Reply = lists:usort([ P#plugin.module || [P] <- ets:match(Type, '$1') ]),
     {reply, Reply, State};
 handle_call(reload, _From, State) ->
     {reply, get_plugins(), State};
