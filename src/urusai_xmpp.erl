@@ -6,6 +6,7 @@
 
 -define (SERVER, ?MODULE).
 -define (CMD, urusai_xmpp_commands).
+-define (CMD_MUC, urusai_xmpp_cmd_muc).
 
 -include_lib ("deps/exmpp/include/exmpp.hrl").
 -include_lib ("deps/exmpp/include/exmpp_client.hrl").
@@ -63,6 +64,10 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({set_session, Session}, _State) ->
     {noreply, Session};
+handle_cast({muc_leave, Muc}, State) ->
+    timer:sleep(1000),
+    muc_leave(State, Muc),
+    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -171,10 +176,22 @@ handle_muc_message(Session, Packet, From, false) ->
 handle_private(Session, Packet) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, <<"unknown">>),
     Me = exmpp_xml:get_attribute(Packet, <<"to">>, <<"unknown">>),
-    handle_private(Session, Packet, is_owner(From), From, Me).
+    IsMucUser = binary:match(From, <<"@conference.">>) =/= nomatch,
+    handle_private(Session, Packet, is_owner(From, IsMucUser), IsMucUser, From, Me).
 
+%% Parse private message if it has been sent by MUC owner
+%% TODO: optimize ownership code
+handle_private(Session, Packet, true, true, Target, Me) ->
+    Command = exmpp_message:get_body(Packet),
+    [Muc | _] = binary:split(Target, <<"/">>),
+    [C | P] = binary:split(Command, <<" ">>),
+    Body = case ?CMD_MUC:cmd(Muc, C, P) of
+        {ok, Reply} -> Reply;
+        error       -> <<"Bad command.">>
+    end,
+    send_packet(Session, make_private_packet(Me, Target, Body));
 %% Parse private message if it has been sent by bot owner
-handle_private(Session, Packet, true, Target, Me) ->
+handle_private(Session, Packet, true, false, Target, Me) ->
     Command = exmpp_message:get_body(Packet),
     [C | P] = binary:split(Command, <<" ">>),
     % In case owner want to execute some plugin command, he should send it with `exec ` prefix
@@ -184,7 +201,7 @@ handle_private(Session, Packet, true, Target, Me) ->
     end,
     send_packet(Session, make_private_packet(Me, Target, PBody));
 %% Or if it has been sent by somebody else
-handle_private(Session, Packet, false, Target, Me) ->
+handle_private(Session, Packet, false, _, Target, Me) ->
     Command = exmpp_message:get_body(Packet),
     case urusai_plugin:match(private, Target, <<>>, [Command]) of
         none -> 
@@ -422,10 +439,17 @@ target_type(Target) ->
 current_jid() ->
     exmpp_jid:bare_to_binary(urusai_db:get(<<"current_jid">>)).
 
-%% Is JID on owners list?
-is_owner(Jid) ->
+%% Is JID in owners list?
+is_owner(Jid, false) ->
     Bare = exmpp_jid:bare_to_list(exmpp_jid:bare(exmpp_jid:parse(Jid))),
-    lists:member(Bare, urusai_db:get(<<"owners">>)).
+    lists:member(Bare, urusai_db:get(<<"owners">>));
+%% Is JID MUC's owner?
+is_owner(Jid, true) ->
+    [Muc, User] = binary:split(Jid, <<"/">>),
+    UserList = urusai_db:get(<<"muc_users_", Muc/binary>>),
+    [] =/= lists:filter(fun(X) ->
+            X#muc_member.nick =:= User andalso X#muc_member.affiliation =:= <<"owner">>
+        end, UserList).
 
 %% Am I joined to this MUC?
 is_joined(Jid) ->
