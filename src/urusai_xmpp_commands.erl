@@ -60,6 +60,9 @@ cmd(<<"plugins">>, [Action]) ->
         <<"reload">> -> urusai_plugin:reload(), {ok, <<"Plugins reloaded.">>};
         _            -> {ok, <<"Bad action.">>}
     end;
+%% Get database record
+cmd(<<"get">>, [Params]) ->
+    {ok, list_to_binary(io_lib:format("~p", [urusai_db:get(Params)]))};
 %% Make possible to owners run PM plugins
 cmd(<<"exec">>, Cmd) ->
     So = urusai_plugin:match(private, <<"OWNER@NO/WHERE">>, [], Cmd),

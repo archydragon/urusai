@@ -82,7 +82,7 @@ generate_default() ->
 generate_default(<<"owners">>) ->
     urusai_db:set(<<"owners">>, [urusai_config:get(common, owner)]);
 generate_default(<<"status">>) ->
-    urusai_db:set(<<"status">>, <<"Up and running">>);
+    urusai_db:set(<<"status">>, [<<"Up and running">>]);
 generate_default(_NoSuchKey) ->
     error.
 

@@ -13,8 +13,8 @@ run(Config) ->
 %% Put value to database
 set(Ref, Key, Value) ->
     case dets:insert(Ref, {Key, Value}) of
-        true -> dets:sync(Ref), ok;
-        _    -> error
+        ok -> dets:sync(Ref), ok;
+        E  -> lager:error("DETS insertion error: ~p", [E]), error
     end.
 
 %% Get value from database

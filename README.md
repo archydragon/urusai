@@ -65,6 +65,7 @@ Send to the bot subscription from JID set as owner in configuration file. Then y
   * ``muc nick <MUC_ADDRESS>`` — change bot's shown nick for this MUC
   * ``plugins list`` — list of loaded plugins' triggers information
   * ``plugins reload`` — reload plugins
+  * ``get <KEY>`` — get the value of <KEY> field from the database
   * ``exec <COMMAND>`` — execute private message plugin command
 
 After the bot joined MUC, the owners of MUC can manage its behaviour sending private messages inside the room:
