@@ -4,16 +4,22 @@
 
 start() ->
     lager:start(),
-    application:start(pooler),
-    application:start(crypto),
-    application:start(public_key),
-    application:start(sasl),
-    application:start(ssl),
-    application:start(exmpp),
-    application:start(urusai),
-    application:start(ranch),
-    application:start(cowboy),
-    urusai_http:start().
+    ok = application:start(pooler),
+    ok = application:start(crypto),
+    ok = application:start(asn1),
+    ok = application:start(public_key),
+    ok = application:start(sasl),
+    ok = application:start(ssl),
+    ok = application:start(exmpp),
+    case application:start(urusai) of
+        ok ->
+            application:start(ranch),
+            application:start(cowboy),
+            urusai_http:start();
+        {error, Reason} ->
+            lager:error("Failed to start urusai: ~p", [Reason]),
+            stop()
+    end.
 
 stop() ->
     application:stop(cowboy),
@@ -24,5 +30,4 @@ stop() ->
     application:stop(sasl),
     application:stop(public_key),
     application:stop(crypto),
-    application:stop(pooler),
-    lager:stop().
+    application:stop(pooler).

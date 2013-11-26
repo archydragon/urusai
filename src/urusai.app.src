@@ -6,11 +6,8 @@
   {applications, [
                   kernel,
                   stdlib,
-                  pooler,
-                  crypto,
-                  sasl,
-                  ssl,
                   public_key,
+                  ssl,
                   exmpp
                  ]},
   {mod, { urusai_app, []}},
