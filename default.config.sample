@@ -45,7 +45,8 @@
         ]},
         %% HTTP API configuration
         {http, [
-            {allow_private, true},
+            %% Uncomment the following line to allow sending private messages via API
+            % {allow_private, true},
             {port, 8011},
             {path, "/api"}
         ]}

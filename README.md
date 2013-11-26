@@ -141,7 +141,7 @@ HTTP API
 
 Allows sending messages via bot from outer world. The default API URL is [http://localhost:8011/api](http://localhost:8011/api), port and location could be changed via configuration file.
 
-To send private message via bot you should send the following JSON in POST request body:
+To send message via bot you should send the following JSON in POST request body:
 
 ```javascript
 {"type":   "message",
@@ -159,7 +159,7 @@ Otherwise the result will be ``"error"`` with the details in ``"message"`` field
 
 **Allowed types:**
 
-  * ``message`` for direct message sending
+  * ``message`` for direct message sending (if you need it, enable ``http/allow_private`` option in configuration file)
   * ``plugin`` to pass message body via plugin mechanism
 
 **Allowed targets:**
