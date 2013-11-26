@@ -45,6 +45,7 @@
         ]},
         %% HTTP API configuration
         {http, [
+            {allow_private, true},
             {port, 8011},
             {path, "/api"}
         ]}

@@ -61,7 +61,8 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-default(auth, ssl)         -> false;
-default(auth, port)        -> 5222;
-default(muc, default_nick) -> "Urusai!";
-default(_, _)              -> [].
+default(auth, ssl)           -> false;
+default(auth, port)          -> 5222;
+default(muc, default_nick)   -> "Urusai!";
+default(http, allow_private) -> false;
+default(_, _)                -> [].
