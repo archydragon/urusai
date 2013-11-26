@@ -62,9 +62,8 @@ plugins(Type) ->
 %% Find matching triggers and execute appropriate Python functions
 match(Type, From, FromJID, [Value]) ->
     [BaseJid | _] = binary:split(From, <<"/">>),
-    % TODO: REWRITE
-    Actions = ets:match(Type, '$1'), % select all from ETS table
-    case [ A || #plugin{trigger = T} = A <- lists:flatten(Actions), re:run(Value, T) =/= nomatch ] of
+    Actions = ets:tab2list(Type),
+    case [ A || #plugin{trigger = T} = A <- Actions, re:run(Value, T) =/= nomatch ] of
         []    -> [none];
         CanDo -> [ run(
                     Type,
@@ -87,10 +86,10 @@ handle_call({call, M, F, A}, _From, State) ->
     Reply = call_pool_member(M, F, A),
     {reply, Reply, State};
 handle_call(plugins, _From, State) ->
-    Reply = [ {T, ets:match(T, '$1')} || T <- ?pluginTypes ],
+    Reply = [ {T, ets:tab2list(T)} || T <- ?pluginTypes ],
     {reply, Reply, State};
 handle_call({plugins, Type}, _From, State) ->
-    Reply = lists:usort([ P#plugin.module || [P] <- ets:match(Type, '$1') ]),
+    Reply = lists:usort([ P#plugin.module || P <- ets:tab2list(Type) ]),
     {reply, Reply, State};
 handle_call(reload, _From, State) ->
     {reply, get_plugins(), State};
