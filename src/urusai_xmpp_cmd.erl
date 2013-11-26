@@ -1,6 +1,6 @@
 %%% Commands available by sending private messages by bot owner.
 %%%
--module (urusai_xmpp_commands).
+-module (urusai_xmpp_cmd).
 
 -export ([cmd/2]).
 
@@ -12,32 +12,10 @@ cmd(<<"status">>, Message) ->
     gen_server:call(urusai_xmpp, {status, Message});
 %% Displays possible actions with owner management
 cmd(<<"owner">>, []) ->
-    {ok, <<"Allowed actions: \n\tlist\n\tadd <JID>\n\tdel <JID>">>};
-%% Owner management — list, add, delete
+    {ok, owner(<<"help">>, [])};
 cmd(<<"owner">>, [Params]) ->
-    OKey = <<"owners">>,
     [Action | Tail] = binary:split(Params, <<" ">>),
-    Reply = case Action of
-        <<"list">> ->
-            io_lib:format("~p", [urusai_db:get(OKey)]);
-        <<"add">> when Tail =/= [] ->
-            % TODO: disallow possibility to add a single JID multiple times
-            [JID] = Tail,
-            urusai_db:set(OKey, lists:append(urusai_db:get(OKey), [binary_to_list(JID)])),
-            <<JID/binary, " added to owners.">>;
-        <<"del">> when Tail =/= [] ->
-            [JID] = Tail,
-            case urusai_config:get(common, owner) =:= binary_to_list(JID) of
-                true ->
-                    <<"The owner set in configuration file cannot be deleted.">>;
-                _  ->
-                    urusai_db:set(OKey, lists:delete(binary_to_list(JID), urusai_db:get(OKey))),
-                    <<JID/binary, " removed from owners.">>
-            end;
-        _ ->
-            <<"Invalid action. Allowed actions: \n\tlist\n\tadd <JID>\n\tdel <JID>">>
-    end,
-    {ok, Reply};
+    {ok, owner(Action, Tail)};
 %% MUC management — join, leave, change nickname
 cmd(<<"muc">>, [Params]) ->
     [Action | [Tail]] = binary:split(Params, <<" ">>),
@@ -69,3 +47,27 @@ cmd(<<"exec">>, Cmd) ->
     {ok, io_lib:format("~p", [So])};
 cmd(_, _) ->
     error.
+
+%%% ---------------------------------
+%%% Internal functions
+%%% ---------------------------------
+
+%% Owner management
+owner(<<"help">>, []) ->
+    <<"Allowed actions: \n\tlist\n\tadd <JID>\n\tdel <JID>">>;
+owner(<<"list">>, []) ->
+    io_lib:format("~p", [urusai_db:get(<<"owners">>)]);
+owner(<<"add">>, [Jid]) when Jid =/= <<"">> ->
+    urusai_db:set(<<"owners">>, lists:usort(lists:append(urusai_db:get(<<"owners">>), [binary_to_list(Jid)]))),
+    <<Jid/binary, " added to owners.">>;
+owner(<<"del">>, [Jid]) when Jid =/= <<"">> ->
+    case urusai_config:get(common, owner) =:= binary_to_list(Jid) of
+        true ->
+            <<"The owner set in configuration file cannot be deleted.">>;
+        _  ->
+            urusai_db:set(<<"owners">>, lists:delete(binary_to_list(Jid), urusai_db:get(<<"owners">>))),
+            <<Jid/binary, " removed from owners.">>
+    end;
+owner(_, _) ->
+    H = owner(<<"help">>, []),
+    <<"Invalid action.\n", H/binary>>.

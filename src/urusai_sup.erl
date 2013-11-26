@@ -23,7 +23,7 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 1, 10}, [
+    {ok, { {one_for_one, 10, 10}, [
         ?CHILD(urusai_config, worker),
         ?CHILD(urusai_db, worker),
         ?CHILD(urusai_plugin, worker),

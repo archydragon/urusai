@@ -5,7 +5,7 @@
 -behaviour (gen_server).
 
 -define (SERVER, ?MODULE).
--define (CMD, urusai_xmpp_commands).
+-define (CMD, urusai_xmpp_cmd).
 -define (CMD_MUC, urusai_xmpp_cmd_muc).
 
 -include_lib ("deps/exmpp/include/exmpp.hrl").
