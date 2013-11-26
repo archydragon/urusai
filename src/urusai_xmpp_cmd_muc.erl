@@ -41,6 +41,28 @@ cmd(Muc, <<"plugins">>, [Params]) ->
             end,
             {ok, Reply}
     end;
+cmd(_, <<"http">>, []) ->
+    {ok, <<"Allowed actions:\n\tstate\n\ttoggle">>};
+cmd(Muc, <<"http">>, [Params]) ->
+    EnabledList = urusai_db:get(<<"muc_http_enabled">>),
+    case Params of
+        <<"state">> ->
+            case lists:member(Muc, EnabledList) of
+                true  -> {ok, <<"Sending messages via HTTP API to this MUC is enabled.">>};
+                false -> {ok, <<"Sending messages via HTTP API to this MUC is disabled.">>}
+            end;
+        <<"toggle">> ->
+            case lists:member(Muc, EnabledList) of
+                true ->
+                    urusai_db:set(<<"muc_http_enabled">>, lists:delete(Muc, EnabledList)),
+                    {ok, <<"HTTP API has been disabled for MUC ", Muc/binary>>};
+                false ->
+                    urusai_db:set(<<"muc_http_enabled">>, lists:append(EnabledList, [Muc])),
+                    {ok, <<"HTTP API has been enabled for MUC ", Muc/binary>>}
+            end;
+        <<"">> ->
+            {ok, <<"Allowed actions:\n\tstate\n\ttoggle">>}
+    end;
 cmd(_, _, _) ->
     error.
 

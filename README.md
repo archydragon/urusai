@@ -73,6 +73,8 @@ After the bot joined MUC, the owners of MUC can manage its behaviour sending pri
   * ``w`` — the name of room you are in
   * ``plugins list`` — get list of loaded plugins and their state
   * ``plugins toggle <PLUGIN>`` — toggle plugin enabled or disabled
+  * ``http state`` — get the state of is message sending to this MUC via HTTP API allowed
+  * ``http toggle`` — enable or disable possibility of sending messages to this MUC via HTTP API
   * ``leave`` — force the bot to go out
 
 **Warning:** the plugins are unloaded automatically after plugin module file deletion and reloading plugins by the bot owner or full bot restart, but if you delete a file, reload plugins, put the file back and then reload plugins again, it will become active for all the MUCs it has been active for before deletion.
@@ -159,13 +161,13 @@ Otherwise the result will be ``"error"`` with the details in ``"message"`` field
 
 **Allowed types:**
 
-  * ``message`` for direct message sending (if you need it, enable ``http/allow_private`` option in configuration file)
+  * ``message`` for direct message sending
   * ``plugin`` to pass message body via plugin mechanism
 
 **Allowed targets:**
 
-  * ``jid@server.org`` — send message directly to this JID
-  * ``room@conference.server.org`` — send message to MUC (if you're sending ``plugin`` typed message to MUC, MUC plugins will be applied); you should be joined MUC to send messages there
+  * ``jid@server.org`` — send message directly to this JID (if you need this feature, you should enable appropriate option in configuration file)
+  * ``room@conference.server.org`` — send message to MUC (if you're sending ``plugin`` typed message to MUC, MUC plugins will be applied); you should be joined MUC to send messages there (if you need this feature, MUC's owner should enable it)
   * ``room@conference.server.org/Interlocutor`` — send private message to user Interlocutor from MUC room@
 
 

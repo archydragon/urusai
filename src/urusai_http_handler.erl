@@ -31,7 +31,13 @@ reply(Req, <<"POST">>) ->
         Decoded ->
             [Type, Target, Body] =
                 [ proplists:get_value(K, Decoded) || K <- [<<"type">>, <<"target">>, <<"body">>] ],
-            {Result, Message} = call_xmpp(Type, urusai_config:get(http, allow_private), Target, Body),
+            {Result, Message} = call_xmpp(
+                Type,
+                urusai_config:get(http, allow_private) or
+                lists:member(Target, urusai_db:get(<<"muc_http_enabled">>)),
+                Target,
+                Body
+            ),
             {200, jsonx:encode([{result, Result}, {message, Message}])}
     end;
 reply(_Req, _) ->
@@ -42,11 +48,11 @@ call_xmpp(_Type, _Allow, undefined, _Body) ->
     {error, target_not_set};
 call_xmpp(_Type, _Allow, _Target, undefined) ->
     {error, body_not_set};
-call_xmpp(<<"message">>, false, _Target, _Body) ->
+call_xmpp(_Type, false, _Target, _Body) ->
     {error, not_allowed};
 call_xmpp(<<"message">>, true, Target, Body) ->
     gen_server:call(urusai_xmpp, {api_message, Target, Body});
-call_xmpp(<<"plugin">>, _Allow, Target, Body) ->
+call_xmpp(<<"plugin">>, true, Target, Body) ->
     gen_server:call(urusai_xmpp, {api_plugin, Target, Body});
 call_xmpp(_Type, _Allow, _Target, _Body) ->
     {error, unknown_message_type}.

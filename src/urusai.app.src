@@ -1,7 +1,7 @@
 {application, urusai,
  [
   {description, "extendable XMPP bot"},
-  {vsn, "0.0.2"},
+  {vsn, "0.0.3-dev"},
   {registered, []},
   {applications, [
                   kernel,
