@@ -14,7 +14,7 @@ class pluginIsdown(urusai_plugin.MucMessage):
     @staticmethod
     def triggerIsdown(fromName, fj, message):
         request_fmt = "http://downforeveryoneorjustme.com/{0}"
-        site = re.match(r"^(isdown|down)\s(.+)$", message).group(2)
+        site = re.match(r"^(isdown|down)\s(https?\:\/\/)?(.+)$", message).group(3)
         html = urllib2.urlopen(request_fmt.format(site)).read()
         if re.search(r"not just", html, re.M):
             return "It's not just you! http://{0} looks down from here.".format(site)
