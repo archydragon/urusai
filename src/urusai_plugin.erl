@@ -47,7 +47,7 @@ run(Type, _Module, _Function, _Args, false) when Type =:= mucmessage ->
     none;
 run(_Type, Module, Function, Args, _) ->
     try
-        gen_server:call(?MODULE, {call, Module, Function, Args}, 60000)
+        call_pool_member(Module, Function, Args)
     catch exit:{timeout, _} ->
         list_to_binary(io_lib:format("Call to the method '~s' (module '~s') timed out.", [Function, Module]))
     end.
@@ -82,9 +82,6 @@ init(_Args) ->
     get_plugins(),
     {ok, []}.
 
-handle_call({call, M, F, A}, _From, State) ->
-    Reply = call_pool_member(M, F, A),
-    {reply, Reply, State};
 handle_call(plugins, _From, State) ->
     Reply = [ {T, ets:tab2list(T)} || T <- ?pluginTypes ],
     {reply, Reply, State};

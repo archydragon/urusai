@@ -2,6 +2,7 @@ import pyclbr
 import pkgutil
 import re
 from erlport.erlterms import List, Atom
+from erlport.erlang import call
 
 class UrusaiPlugin:
     """
@@ -64,3 +65,26 @@ def getPluginsFromAll():
     available_plugins = [name for _, name, _ in pkgutil.iter_modules([root])]
     out = map(lambda x: (x, getPlugins(x)), available_plugins)
     return List(out)
+
+def getAvailablePlugins(muc):
+    """
+    "Callback" to Erlang to get available plugins for MUC.
+    """
+    return call(Atom("urusai_erlapi"), Atom("available_plugins"), [muc])
+
+def getPluginDocs(muc, module):
+    if not module in getAvailablePlugins(muc):
+        return "No such module."
+    plugins = pyclbr.readmodule(module)
+    out = []
+    for className in plugins:
+        pluginName = re.sub(r"^plugin(.*)", r"\1", className)
+        if (pluginName != className):
+            pluginType = Atom(plugins[className].super[0].name.lower())
+            try:
+                i = __import__(module)
+                doc = getattr(i, className).__doc__
+                out.append(doc)
+            except:
+                return "No such module."
+    return "\n".join(out)
