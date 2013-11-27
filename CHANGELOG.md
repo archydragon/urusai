@@ -3,6 +3,7 @@
   * A piece of control possibilities for MUCs' owners
   * Load/unload plugins mechanism for MUCs
   * HTTP API can be disabled for private messages and for specific MUCs
+  * ``help`` plugin
   * Fixed spontaneous crashes on bot's start
   * ``get`` command to access DB records
 

@@ -4,6 +4,13 @@ import urusai_plugin
 import re
 
 class pluginHelp(urusai_plugin.MucMessage):
+    """
+    Information about available modules in this MUC and their usability.
+    The data is being given from classes' docstrings
+    Usage:
+        "help" for available modules listing
+        "help <MODULE>" for the details about specific module
+    """
     triggers = {
         "^help$": "List",
         "^help\s": "Info"

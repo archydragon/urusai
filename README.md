@@ -98,6 +98,8 @@ from datetime import datetime
 # 'urusai_plugin.Private' class for working with messages sent to
 # the bot directly.
 class pluginTime(urusai_plugin.Private):
+    # Docstrings are also used as the source of `help` plugin's
+    # output generation.
     """
     This plugin class implements replying current time for any user
     sent 'time' string to bot.
