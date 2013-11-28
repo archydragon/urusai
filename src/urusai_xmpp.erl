@@ -22,7 +22,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export ([start_link/0, connect/0]).
+-export ([start_link/0, parse_packet/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -43,8 +43,8 @@ start_link() ->
 %% ------------------------------------------------------------------
 
 init(_Args) ->
-    spawn_link(?MODULE, connect, []),
-    {ok, state}.
+    % spawn_link(?MODULE, connect, []),
+    connect().
 handle_call({muc_join, Muc, Params}, _From, State) ->
     {reply, muc_join(State, Muc, Params, []), State};
 handle_call({muc_join_protected, Muc, Params}, _From, State) ->
@@ -71,8 +71,11 @@ handle_cast({muc_leave, Muc}, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(_Info, State) ->
-    {noreply, State}.
+handle_info(stop, State) ->
+    {stop, normal, shutdown_ok, State};
+handle_info(Packet, Session) ->
+    spawn_link(?MODULE, parse_packet, [Session, Packet]),
+    {noreply, Session}.
 
 terminate(_Reason, _State) ->
     ok.
@@ -113,17 +116,7 @@ connect() ->
     update_status(Session),
     muc_autojoin(Session),
     gen_server:cast(?SERVER, {set_session, Session}),
-    listen(Session).
-
-%% Incoming packets listener
-listen(MySession) ->
-    receive
-        stop ->
-            exmpp_session:stop(MySession);
-        Packet ->
-            parse_packet(MySession, Packet),
-            listen(MySession)
-    end.
+    {ok, Session}.
 
 %% Send formed package
 send_packet(Session, Message) ->
@@ -360,10 +353,14 @@ get_real_jid(MucJid) ->
         [MucJid] ->
             [];
         [Conf, Nick] ->
+            lager:info("Conf: ~p Nick: ~p", [Conf, Nick]),
             MucK = <<"muc_users_", Conf/binary>>,
             List = urusai_db:get(MucK),
-            [Result] = lists:filter(fun(X) -> X#muc_member.nick =:= Nick end, List),
-            Result#muc_member.jid
+            lager:info("List: ~p", [List]),
+            case lists:filter(fun(X) -> X#muc_member.nick =:= Nick end, List) of
+                []       -> [];
+                [Result] -> Result#muc_member.jid
+            end
     end.
 
 %% ----------------------------------------
