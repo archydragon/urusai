@@ -56,9 +56,9 @@ plug(_, _, _) ->
     <<"Invalid action.\n", H/binary>>.
 
 plugin_line(Plugin, true) ->
-    list_to_binary(io_lib:format("\n[X] ~p", [Plugin]));
+    list_to_binary(io_lib:format("\n[X] ~s", [Plugin]));
 plugin_line(Plugin, false) ->
-    list_to_binary(io_lib:format("\n[_] ~p", [Plugin])).
+    list_to_binary(io_lib:format("\n[_] ~s", [Plugin])).
 
 %% Manage HTTP API for MUC
 http([], <<"help">>) ->

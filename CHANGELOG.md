@@ -2,6 +2,7 @@
 
   * A piece of control possibilities for MUCs' owners
   * Load/unload plugins mechanism for MUCs
+  * Plugins can be grouped under subdirectories
   * HTTP API can be disabled for private messages and for specific MUCs
   * ``help`` plugin
   * Fixed spontaneous crashes on bot's start

@@ -43,7 +43,6 @@ start_link() ->
 %% ------------------------------------------------------------------
 
 init(_Args) ->
-    % spawn_link(?MODULE, connect, []),
     connect().
 handle_call({muc_join, Muc, Params}, _From, State) ->
     {reply, muc_join(State, Muc, Params, []), State};
@@ -353,10 +352,8 @@ get_real_jid(MucJid) ->
         [MucJid] ->
             [];
         [Conf, Nick] ->
-            lager:info("Conf: ~p Nick: ~p", [Conf, Nick]),
             MucK = <<"muc_users_", Conf/binary>>,
             List = urusai_db:get(MucK),
-            lager:info("List: ~p", [List]),
             case lists:filter(fun(X) -> X#muc_member.nick =:= Nick end, List) of
                 []       -> [];
                 [Result] -> Result#muc_member.jid

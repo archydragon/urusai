@@ -1,6 +1,7 @@
 import pyclbr
 import pkgutil
 import re
+from importlib import import_module
 from erlport.erlterms import List, Atom
 from erlport.erlang import call
 
@@ -39,6 +40,29 @@ def getPluginsE(emodule):
     """
     getPlugins(emodule.to_string())
 
+def flatten(lst, acc):
+    """
+    Recursive flatten lists. Thx to @dimasmz
+    """
+    for elem in lst:
+        if isinstance(elem, list):
+            flatten(elem, acc)
+        else:
+            acc.append(elem)
+
+def findPlugins(root, prefix):
+    """
+    Recursively find all modules under the directory.
+    """
+    mods = [mod for mod in pkgutil.iter_modules([root], prefix)]
+    reply = []
+    for (_, name, ispkg) in mods:
+        if ispkg:
+            reply.append(findPlugins(root + "/" + name, name + "."))
+        else:
+            reply.append(name)
+    return reply
+
 def getPlugins(module):
     """
     Get plugins from module.
@@ -50,10 +74,11 @@ def getPlugins(module):
         if (pluginName != className):
             pluginType = Atom(plugins[className].super[0].name.lower())
             try:
-                i = __import__(module)
+                i = import_module(module)
                 triggers = getattr(i, className).clsTriggers()
                 out.append((pluginName, pluginType, triggers))
             except:
+                raise Exception(i, className)
                 return (Atom("bad_triggers"), className)
     return List(out)
 
@@ -62,7 +87,8 @@ def getPluginsFromAll():
     Find all plugin modules and look them for plugins.
     """
     root = "plugins"
-    available_plugins = [name for _, name, _ in pkgutil.iter_modules([root])]
+    available_plugins = []
+    flatten(findPlugins(root, ''), available_plugins)
     out = map(lambda x: (x, getPlugins(x)), available_plugins)
     return List(out)
 
@@ -82,7 +108,7 @@ def getPluginDocs(muc, module):
         if (pluginName != className):
             pluginType = Atom(plugins[className].super[0].name.lower())
             try:
-                i = __import__(module)
+                i = import_module(module)
                 doc = getattr(i, className).__doc__
                 out.append(doc)
             except:
