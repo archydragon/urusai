@@ -7,6 +7,7 @@
   * ``help`` plugin
   * Fixed spontaneous crashes on bot's start
   * ``get`` command to access DB records
+  * Command shortcuts
 
 ## 0.0.2
 

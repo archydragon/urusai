@@ -54,29 +54,29 @@ Control
 
 Send to the bot subscription from JID set as owner in configuration file. Then you may manage using the following commands:
 
-  * ``ping`` — pong!
-  * ``status <YOUR_STATUS_MESSAGE>`` — update status message
-  * ``owner list`` — list of bot's owners
-  * ``owner add <JID>`` — add <JID> to owners list
-  * ``owner del <JID>`` — remove <JID> from owners list (warning: all the owners have the same rights, but the main owner cannot be deleted from the list)
-  * ``muc join <MUC_ADDRESS> [<NICK>]`` — join MUC, custom nick may be set on this stage
-  * ``muc pjoin <MUC_ADDRESS> <PASSWORD>`` — join password protected MUC
-  * ``muc leave <MUC_ADDRESS>`` — leave MUC
-  * ``muc nick <MUC_ADDRESS>`` — change bot's shown nick for this MUC
-  * ``plugins list`` — list of loaded plugins' triggers information
-  * ``plugins reload`` — reload plugins
-  * ``get <KEY>`` — get the value of <KEY> field from the database
-  * ``exec <COMMAND>`` — execute private message plugin command
+  * ``p[ing]`` — pong!
+  * ``s[tatus] <YOUR_STATUS_MESSAGE>`` — update status message
+  * ``o[wner] list`` — list of bot's owners
+  * ``o[wner] add <JID>`` — add <JID> to owners list
+  * ``o[wner] del <JID>`` — remove <JID> from owners list (warning: all the owners have the same rights, but the main owner cannot be deleted from the list)
+  * ``m[uc] join <MUC_ADDRESS> [<NICK>]`` — join MUC, custom nick may be set on this stage
+  * ``m[uc] pjoin <MUC_ADDRESS> <PASSWORD>`` — join password protected MUC
+  * ``m[uc] leave <MUC_ADDRESS>`` — leave MUC
+  * ``m[uc] nick <MUC_ADDRESS>`` — change bot's shown nick for this MUC
+  * ``pl[ugins] list`` — list of loaded plugins' triggers information
+  * ``pl[ugins] reload`` — reload plugins
+  * ``g[et] <KEY>`` — get the value of <KEY> field from the database
+  * ``e[xec] <COMMAND>`` — execute private message plugin command
 
 After the bot joined MUC, the owners of MUC can manage its behaviour sending private messages inside the room:
 
-  * ``ping`` — guess, what?
+  * ``p[ing]`` — guess, what?
   * ``w`` — the name of room you are in
-  * ``plugins list`` — get list of loaded plugins and their state
-  * ``plugins toggle <PLUGIN>`` — toggle plugin enabled or disabled
-  * ``http state`` — get the state of is message sending to this MUC via HTTP API allowed
-  * ``http toggle`` — enable or disable possibility of sending messages to this MUC via HTTP API
-  * ``leave`` — force the bot to go out
+  * ``pl[ugins] list`` — get list of loaded plugins and their state
+  * ``pl[ugins] toggle <PLUGIN>`` — toggle plugin enabled or disabled
+  * ``h[ttp] state`` — get the state of is message sending to this MUC via HTTP API allowed
+  * ``h[ttp] toggle`` — enable or disable possibility of sending messages to this MUC via HTTP API
+  * ``l[eave]`` — force the bot to go out
 
 **Warning:** the plugins are unloaded automatically after plugin module file deletion and reloading plugins by the bot owner or full bot restart, but if you delete a file, reload plugins, put the file back and then reload plugins again, it will become active for all the MUCs it has been active for before deletion.
 

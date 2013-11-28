@@ -7,15 +7,23 @@
 %% Just ping-pong
 cmd(<<"ping">>, []) ->
     {ok, <<"pong">>};
+cmd(<<"p">>, []) ->
+    cmd(<<"ping">>, []);
 %% Change status message
 cmd(<<"status">>, Message) ->
     gen_server:call(urusai_xmpp, {status, Message});
+cmd(<<"s">>, Message) ->
+    cmd(<<"status">>, Message);
 %% Displays possible actions with owner management
 cmd(<<"owner">>, []) ->
     {ok, owner(<<"help">>, [])};
 cmd(<<"owner">>, [Params]) ->
     [Action | Tail] = binary:split(Params, <<" ">>),
     {ok, owner(Action, Tail)};
+cmd(<<"o">>, []) ->
+    cmd(<<"owner">>, []);
+cmd(<<"o">>, [Params]) ->
+    cmd(<<"owner">>, [Params]);
 %% MUC management — join, leave, change nickname
 cmd(<<"muc">>, [Params]) ->
     [Action | [Tail]] = binary:split(Params, <<" ">>),
@@ -28,9 +36,13 @@ cmd(<<"muc">>, [Params]) ->
         % TODO: implement kick and ban triggers ^_^
         _           -> {ok, <<"Bad parameters.">>}
     end);
+cmd(<<"m">>, [Params]) ->
+    cmd(<<"muc">>, [Params]);
 %% List of loaded plugin triggers
 cmd(<<"plugins">>, []) ->
     {ok, <<"Allowed actions:\n\tlist\n\treload">>};
+cmd(<<"pl">>, []) ->
+    cmd(<<"plugins">>, []);
 %% Reload plugins
 cmd(<<"plugins">>, [Action]) ->
     case Action of
@@ -38,13 +50,19 @@ cmd(<<"plugins">>, [Action]) ->
         <<"reload">> -> urusai_plugin:reload(), {ok, <<"Plugins reloaded.">>};
         _            -> {ok, <<"Bad action.">>}
     end;
+cmd(<<"pl">>, [Action]) ->
+    cmd(<<"plugins">>, [Action]);
 %% Get database record
 cmd(<<"get">>, [Params]) ->
     {ok, list_to_binary(io_lib:format("~p", [urusai_db:get(Params)]))};
+cmd(<<"g">>, [Params]) ->
+    cmd(<<"get">>, [Params]);
 %% Make possible to owners run PM plugins
 cmd(<<"exec">>, Cmd) ->
     So = urusai_plugin:match(private, <<"OWNER@NO/WHERE">>, [], Cmd),
     {ok, io_lib:format("~p", [So])};
+cmd(<<"e">>, Cmd) ->
+    cmd(<<"exec">>, Cmd);
 cmd(_, _) ->
     error.
 

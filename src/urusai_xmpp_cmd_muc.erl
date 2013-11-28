@@ -6,20 +6,32 @@
 
 cmd(_, <<"ping">>, []) ->
     {ok, <<"pong">>};
+cmd(_, <<"p">>, []) ->
+    cmd([], <<"ping">>, []);
 cmd(Muc, <<"w">>, []) ->
     {ok, <<"You're from ", Muc/binary>>};
 cmd(Muc, <<"leave">>, []) ->
     gen_server:cast(urusai_xmpp, {muc_leave, Muc}),
     {ok, <<"As you wish.">>};
+cmd(Muc, <<"l">>, []) ->
+    cmd(Muc, <<"leave">>, []);
 cmd(_, <<"plugins">>, []) ->
     {ok, plug([], <<"help">>, [])};
+cmd(_, <<"pl">>, []) ->
+    cmd([], <<"plugins">>, []);
 cmd(Muc, <<"plugins">>, [Params]) ->
     [Action | Tail] = binary:split(Params, <<" ">>),
     {ok, plug(Muc, Action, Tail)};
+cmd(Muc, <<"pl">>, [Params]) ->
+    cmd(Muc, <<"plugins">>, [Params]);
 cmd(_, <<"http">>, []) ->
     {ok, <<"Allowed actions:\n\tstate\n\ttoggle">>};
+cmd(_, <<"h">>, []) ->
+    cmd([], <<"http">>, []);
 cmd(Muc, <<"http">>, [Params]) ->
     {ok, http(Muc, Params)};
+cmd(Muc, <<"h">>, [Params]) ->
+    cmd(Muc, <<"http">>, [Params]);
 cmd(_, _, _) ->
     error.
 
