@@ -29,12 +29,17 @@ cmd(<<"muc">>, [Params]) ->
     [Action | [Tail]] = binary:split(Params, <<" ">>),
     [Muc | P] = binary:split(Tail, <<" ">>),
     gen_server:call(urusai_xmpp, case Action of
-        <<"join">>  -> {muc_join, Muc, P};
-        <<"pjoin">> -> {muc_join_protected, Muc, P};
-        <<"leave">> -> {muc_leave, Muc};
-        <<"nick">>  -> {muc_nick, Muc, P};
+        X when X == <<"join">> orelse X == <<"j">> ->
+            {muc_join, Muc, P};
+        X when X == <<"pjoin">> orelse X == <<"pj">> ->
+            {muc_join_protected, Muc, P};
+        X when X == <<"leave">> orelse X == <<"l">> ->
+            {muc_leave, Muc};
+        X when X == <<"nick">> orelse X == <<"n">> ->
+            {muc_nick, Muc, P};
         % TODO: implement kick and ban triggers ^_^
-        _           -> {ok, <<"Bad parameters.">>}
+        _ ->
+            {ok, <<"Bad parameters.">>}
     end);
 cmd(<<"m">>, [Params]) ->
     cmd(<<"muc">>, [Params]);
@@ -46,9 +51,12 @@ cmd(<<"pl">>, []) ->
 %% Reload plugins
 cmd(<<"plugins">>, [Action]) ->
     case Action of
-        <<"list">>   -> {ok, io_lib:format("~p", [urusai_plugin:plugins()])};
-        <<"reload">> -> urusai_plugin:reload(), {ok, <<"Plugins reloaded.">>};
-        _            -> {ok, <<"Bad action.">>}
+        X when X == <<"list">> orelse X == <<"l">> ->
+            {ok, io_lib:format("~p", [urusai_plugin:plugins()])};
+        X when X == <<"reload">> orelse X == <<"r">> ->
+            urusai_plugin:reload(), {ok, <<"Plugins reloaded.">>};
+        _ ->
+            {ok, <<"Bad action.">>}
     end;
 cmd(<<"pl">>, [Action]) ->
     cmd(<<"plugins">>, [Action]);

@@ -78,7 +78,6 @@ def getPlugins(module):
                 triggers = getattr(i, className).clsTriggers()
                 out.append((pluginName, pluginType, triggers))
             except:
-                raise Exception(i, className)
                 return (Atom("bad_triggers"), className)
     return List(out)
 

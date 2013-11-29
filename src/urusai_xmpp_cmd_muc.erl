@@ -63,6 +63,10 @@ plug(Muc, <<"toggle">>, [Plugin]) when Plugin =/= <<>> ->
         {false, false} ->
             list_to_binary(io_lib:format("There is no plugin '~s' found.", [P]))
     end;
+plug(Muc, <<"l">>, []) ->
+    plug(Muc, <<"list">>, []);
+plug(Muc, <<"t">>, Plugin) ->
+    plug(Muc, <<"toggle">>, Plugin);
 plug(_, _, _) ->
     H = plug([], <<"help">>, []),
     <<"Invalid action.\n", H/binary>>.
@@ -90,6 +94,10 @@ http(Muc, <<"toggle">>) ->
             urusai_db:set(<<"muc_http_enabled">>, lists:append(EnabledList, [Muc])),
             <<"HTTP API has been enabled for MUC ", Muc/binary>>
     end;
+http(Muc, <<"s">>) ->
+    http(Muc, <<"state">>);
+http(Muc, <<"t">>) ->
+    http(Muc, <<"toggle">>);
 http(_, _) ->
     H = http([], <<"help">>),
     <<"Invalid action.\n", H/binary>>.
