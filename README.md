@@ -84,7 +84,7 @@ After the bot joined MUC, the owners of MUC can manage its behaviour sending pri
 Plugin API
 ----------
 
-All the plugins are stored in modules with ``.py`` or ``.pyc`` extension under ``plugins`` directory. To make its management more easy, you may create subdirectories there and move plugin modules to them (multiple directory nesting level is allowed).
+All the plugins are stored in modules with ``.py`` or ``.pyc`` extension under ``plugins`` directory. To make its management more easy, you may create subdirectories there and move plugin modules to them (multiple directory nesting level is allowed). There should be empty ``__init__.py`` file under an every directory containing plugins you need to use.
 
 Example of plugin module source code:
 
