@@ -4,6 +4,28 @@
 
 -export ([cmd/2]).
 
+%% Help
+cmd(<<"help">>, []) ->
+    R = <<
+        "Allowed commands:\n",
+        "\t\"h[elp]\" — this help\n",
+        "\t\"p[ing]\" — pong!\n",
+        "\t\"s[tatus] <YOUR_STATUS_MESSAGE>\" — update status message\n",
+        "\t\"o[wner] l[ist]\" — list of bot's owners\n",
+        "\t\"o[wner] a[dd] <JID>\" — add <JID> to owners list\n",
+        "\t\"o[wner] d[el] <JID>\" — remove <JID> from owners list\n",
+        "\t\"m[uc] j[oin] <MUC_ADDRESS> [<NICK>]\" — join MUC, custom nick may be set on this stage\n",
+        "\t\"m[uc] pj[oin] <MUC_ADDRESS> <PASSWORD>\" — join password protected MUC\n",
+        "\t\"m[uc] l[eave] <MUC_ADDRESS>\" — leave MUC\n",
+        "\t\"m[uc] n[ick] <MUC_ADDRESS>\" — change bot's shown nick for this MUC\n",
+        "\t\"pl[ugins] l[ist]\" — list of loaded plugins' triggers information\n",
+        "\t\"pl[ugins] r[eload]\" — reload plugins\n",
+        "\t\"g[et] <KEY>\" — get the value of <KEY> field from the database\n",
+        "\t\"e[xec] <COMMAND>\" — execute private message plugin command\n"
+    >>,
+    {ok, R};
+cmd(<<"h">>, []) ->
+    cmd(<<"help">>, []);
 %% Just ping-pong
 cmd(<<"ping">>, []) ->
     {ok, <<"pong">>};

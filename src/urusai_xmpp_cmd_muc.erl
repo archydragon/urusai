@@ -4,6 +4,20 @@
 
 -export ([cmd/3]).
 
+cmd(_, <<"help">>, []) ->
+    R = <<
+  "\t\"h[elp]\" — this help\n",
+  "\t\"p[ing]\" — pong!\n",
+  "\t\"w\" — the name of room you are in\n",
+  "\t\"pl[ugins] l[ist]\" — get list of loaded plugins and their state\n",
+  "\t\"pl[ugins] t[oggle] <PLUGIN>\" — toggle plugin enabled or disabled\n",
+  "\t\"ht[tp] s[tate]\" — get the state of is message sending to this MUC via HTTP API allowed\n",
+  "\t\"ht[tp] t[oggle]\" — enable or disable possibility of sending messages to this MUC via HTTP API\n",
+  "\t\"l[eave]\" — force the bot to go out\n"
+    >>,
+    {ok, R};
+cmd(_, <<"h">>, []) ->
+    cmd([], <<"help">>, []);
 cmd(_, <<"ping">>, []) ->
     {ok, <<"pong">>};
 cmd(_, <<"p">>, []) ->
@@ -26,11 +40,11 @@ cmd(Muc, <<"pl">>, [Params]) ->
     cmd(Muc, <<"plugins">>, [Params]);
 cmd(_, <<"http">>, []) ->
     {ok, <<"Allowed actions:\n\tstate\n\ttoggle">>};
-cmd(_, <<"h">>, []) ->
+cmd(_, <<"ht">>, []) ->
     cmd([], <<"http">>, []);
 cmd(Muc, <<"http">>, [Params]) ->
     {ok, http(Muc, Params)};
-cmd(Muc, <<"h">>, [Params]) ->
+cmd(Muc, <<"ht">>, [Params]) ->
     cmd(Muc, <<"http">>, [Params]);
 cmd(_, _, _) ->
     error.

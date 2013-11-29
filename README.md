@@ -52,8 +52,9 @@ Where ``default`` is the base name for your configuration (``default.config`` in
 Control
 -------
 
-Send to the bot subscription from JID set as owner in configuration file. Then you may manage using the following commands:
+Send to the bot subscription from JID set as owner in configuration file. Then use the following commands for bot management (you may use either short or full names of them):
 
+  * ``h[elp]`` — show information about available commands
   * ``p[ing]`` — pong!
   * ``s[tatus] <YOUR_STATUS_MESSAGE>`` — update status message
   * ``o[wner] l[ist]`` — list of bot's owners
@@ -70,12 +71,13 @@ Send to the bot subscription from JID set as owner in configuration file. Then y
 
 After the bot joined MUC, the owners of MUC can manage its behaviour sending private messages inside the room:
 
+  * ``h[elp]`` — show information about available commands
   * ``p[ing]`` — guess, what?
   * ``w`` — the name of room you are in
   * ``pl[ugins] l[ist]`` — get list of loaded plugins and their state
   * ``pl[ugins] t[oggle] <PLUGIN>`` — toggle plugin enabled or disabled
-  * ``h[ttp] s[tate]`` — get the state of is message sending to this MUC via HTTP API allowed
-  * ``h[ttp] t[oggle]`` — enable or disable possibility of sending messages to this MUC via HTTP API
+  * ``ht[tp] s[tate]`` — get the state of is message sending to this MUC via HTTP API allowed
+  * ``ht[tp] t[oggle]`` — enable or disable possibility of sending messages to this MUC via HTTP API
   * ``l[eave]`` — force the bot to go out
 
 **Warning:** the plugins are unloaded automatically after plugin module file deletion and reloading plugins by the bot owner or full bot restart, but if you delete a file, reload plugins, put the file back and then reload plugins again, it will become active for all the MUCs it has been active for before deletion.
