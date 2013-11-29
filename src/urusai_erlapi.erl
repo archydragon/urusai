@@ -2,7 +2,10 @@
 %%% 
 -module (urusai_erlapi).
 
--export ([available_plugins/1]).
+-export ([available_plugins/0, available_plugins/1]).
+
+available_plugins() ->
+    [ a_to_bin(P) || P <- lists:delete(help, urusai_plugin:plugins(private))].
 
 available_plugins(Muc) ->
     All = sets:from_list(urusai_plugin:plugins(mucmessage)),

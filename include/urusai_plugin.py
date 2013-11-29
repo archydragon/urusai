@@ -97,8 +97,16 @@ def getAvailablePlugins(muc):
     """
     return call(Atom("urusai_erlapi"), Atom("available_plugins"), [muc])
 
+def getAvailablePlugins():
+    """
+    "Callback" to Erlang to get available plugins for MUC.
+    """
+    return call(Atom("urusai_erlapi"), Atom("available_plugins"), [])
+
 def getPluginDocs(muc, module):
-    if not module in getAvailablePlugins(muc):
+    if muc and not module in getAvailablePlugins(muc):
+        return "No such module."
+    if not muc and not module in getAvailablePlugins():
         return "No such module."
     plugins = pyclbr.readmodule(module)
     out = []
