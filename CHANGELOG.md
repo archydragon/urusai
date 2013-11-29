@@ -4,8 +4,9 @@
   * Load/unload plugins mechanism for MUCs
   * Plugins can be grouped under subdirectories
   * HTTP API can be disabled for private messages and for specific MUCs
-  * ``help`` plugin
+  * ``help`` plugin for common users
   * Fixed spontaneous crashes on bot's start
+  * ``help`` command for owners
   * ``get`` command to access DB records
   * Command shortcuts
 
