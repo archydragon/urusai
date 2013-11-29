@@ -67,6 +67,9 @@ handle_cast({muc_leave, Muc}, State) ->
     timer:sleep(1000),
     muc_leave(State, Muc),
     {noreply, State};
+handle_cast({send_packet, Packet}, Session) ->
+    send_packet(Session, Packet),
+    {noreply, Session};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -323,6 +326,7 @@ muc_userjoined_save(Conf, Nick, {Jid, Affiliation, Role}) ->
         affiliation = Affiliation,
         role = Role
     },
+    muc_presence_match(<<Conf/binary, "/", Nick/binary>>, Jid, "available", Affiliation, Role),
     MucK = <<"muc_users_", Conf/binary>>,
     urusai_db:set(MucK, lists:append(urusai_db:get(MucK), [User])),
     ok.
@@ -332,7 +336,8 @@ muc_userleft(Conf, Nick, Raw) ->
 
 muc_userleft_save(_Conf, _Nick, ok) ->
     ok;
-muc_userleft_save(Conf, Nick, {_Jid, _Affiliation, _Role}) ->
+muc_userleft_save(Conf, Nick, {Jid, _Affiliation, _Role}) ->
+    muc_presence_match(<<Conf/binary, "/", Nick/binary>>, Jid, "unavailable", "", ""),
     MucK = <<"muc_users_", Conf/binary>>,
     urusai_db:set(MucK, lists:filter(fun(X) -> X#muc_member.nick =/= Nick end, urusai_db:get(MucK))),
     ok.
@@ -346,6 +351,14 @@ muc_getdata(Raw) ->
                 || A <- [<<"jid">>, <<"affiliation">>, <<"role">>] ])
     end.
 
+muc_presence_match(From, Jid, Presence, Affiliation, Role) ->
+    Msg = list_to_binary(io_lib:format("~s|~s|~s", [Presence, Affiliation, Role])),
+    Matched = urusai_plugin:match(mucpresence, From, Jid, [Msg]),
+    case lists:filter(fun(X) -> X =/= none end, Matched) of
+        []    -> ok;
+        % Other -> [send_packet(Session, make_muc_packet(Me, From, E)) || E <- Other]
+        Other -> [ gen_server:cast(?MODULE, {send_packet, make_muc_packet(current_jid(), From, E)}) || E <- Other ]
+    end.
 
 get_real_jid(MucJid) ->
     case binary:split(MucJid, <<"/">>) of

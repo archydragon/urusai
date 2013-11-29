@@ -34,6 +34,12 @@ class MucMessage(UrusaiPlugin):
     """
     pass
 
+class MucPresence(UrusaiPlugin):
+    """
+    Parent class for MUC messages plugins.
+    """
+    pass
+
 def getPluginsE(emodule):
     """
     Get plugins from module (module name presented as Erlang string).
