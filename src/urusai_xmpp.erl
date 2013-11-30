@@ -342,6 +342,11 @@ muc_userleft_save(Conf, Nick, {_Presence, Jid, _Affiliation, _Role, _NewNick} = 
     ok.
 
 muc_getdata(Presence, Raw) ->
+    case exmpp_xml:get_attribute(exmpp_xml:get_element(exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), status), <<"code">>, <<>>) of
+        <<>>      -> ok;
+        <<"307">> -> timer:sleep(1000), muc_autojoin();
+        _W        -> ok;
+    end,
     case exmpp_xml:get_element(exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), item) of
         undefined ->
             ok;
