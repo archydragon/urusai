@@ -123,12 +123,15 @@ def getPluginDocs(muc, module):
         pluginName = re.sub(r"^plugin(.*)", r"\1", className)
         if (pluginName != className):
             pluginType = Atom(plugins[className].super[0].name.lower())
-            try:
-                i = import_module(module)
-                doc = getattr(i, className).__doc__
-                out.append(doc)
-            except:
-                return "No such module."
+            if (pluginType == "private" and not muc) or (pluginType == "mucmessage"):
+                try:
+                    i = import_module(module)
+                    doc = getattr(i, className).__doc__
+                    if not doc:
+                        doc = ''
+                    out.append(doc)
+                except:
+                    return "No such module."
     return "\n".join(out)
 
 def dbGet(key):

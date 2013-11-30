@@ -33,7 +33,10 @@ class pluginLogMuc(urusai_plugin.MucMessage):
     @staticmethod
     def triggerLog(fromName, fromJid, message):
         msg_fmt = "<{0}> {1}"
-        [muc, author] = fromName.split("/", 1)
+        try:
+            [muc, author] = fromName.split("/", 1)
+        except ValueError:
+            return ''
         now = datetime.now()
         f = now.strftime(FILE_FMT.format(muc))
         e = now.strftime(STRING_FMT.format(msg_fmt.format(author, message)))

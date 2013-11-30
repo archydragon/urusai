@@ -443,8 +443,9 @@ api_plugin(Target, Body) ->
 api_plugin(_Target, _Body, _Type, false) ->
     {error, not_joined};
 api_plugin(Target, Body, Type, true) ->
-    case urusai_plugin:match(Type, Target, [], [Body]) of
-        [none] ->
+    Matched = urusai_plugin:match(Type, Target, [], [Body]),
+    case lists:filter(fun(X) -> X =/= none end, Matched) of
+        [] ->
             {error, no_appropriate_plugins};
         Replies ->
             [gen_server:cast(?MODULE, {send_packet, make_api_packet(Target, E, {true, Type})}) || E <- Replies],

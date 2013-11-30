@@ -28,7 +28,11 @@ class pluginHelp(urusai_plugin.MucMessage):
     def triggerInfo(fromName, fromJid, message):
         plugin = re.match(r"^help\s(.+)$", message).group(1)
         [muc, author] = fromName.split("/", 1)
-        return urusai_plugin.getPluginDocs(muc, plugin)
+        doc = urusai_plugin.getPluginDocs(muc, plugin)
+        if doc:
+            return doc
+        else:
+            return "There is no any helpful information about " + plugin + "."
 
 class pluginHelpPrivate(urusai_plugin.Private):
     """
@@ -53,4 +57,8 @@ class pluginHelpPrivate(urusai_plugin.Private):
     @staticmethod
     def triggerInfo(fromName, fromJid, message):
         plugin = re.match(r"^help\s(.+)$", message).group(1)
-        return urusai_plugin.getPluginDocs(False, plugin)
+        doc = urusai_plugin.getPluginDocs(False, plugin)
+        if doc:
+            return doc
+        else:
+            return "There is no any helpful information about plugin " + plugin + "."
