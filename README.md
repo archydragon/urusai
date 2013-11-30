@@ -188,8 +188,7 @@ Otherwise the result will be ``"error"`` with the details in ``"message"`` field
 TODO
 ----
 
-  * MUC autorejoin
-  * MUC presence plugins API
+  * **normal** MUC presence plugins API
   * IQ handler
   * more features for plugin returning values
 

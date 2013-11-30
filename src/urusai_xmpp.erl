@@ -314,7 +314,7 @@ muc_autojoin() ->
     [ muc_join(A, [], urusai_db:get(<<"muc_password_", A/binary>>)) || A <- urusai_db:get(<<"autojoin">>) ].
 
 muc_userjoined(Conf, Nick, Raw) ->
-    muc_userjoined_save(Conf, Nick, muc_getdata(<<"available">>, Raw)).
+    muc_userjoined_save(Conf, Nick, muc_getdata(Conf, Nick, <<"available">>, Raw)).
 
 muc_userjoined_save(_Conf, _Nick, ok) ->
     ok;
@@ -331,7 +331,7 @@ muc_userjoined_save(Conf, Nick, {_Presence, Jid, Affiliation, Role, _NewNick} = 
     ok.
 
 muc_userleft(Conf, Nick, Raw) ->
-    muc_userleft_save(Conf, Nick, muc_getdata(<<"unavailable">>, Raw)).
+    muc_userleft_save(Conf, Nick, muc_getdata(Conf, Nick, <<"unavailable">>, Raw)).
 
 muc_userleft_save(_Conf, _Nick, ok) ->
     ok;
@@ -341,11 +341,11 @@ muc_userleft_save(Conf, Nick, {_Presence, Jid, _Affiliation, _Role, _NewNick} = 
     urusai_db:set(MucK, lists:filter(fun(X) -> X#muc_member.nick =/= Nick end, urusai_db:get(MucK))),
     ok.
 
-muc_getdata(Presence, Raw) ->
-    case exmpp_xml:get_attribute(exmpp_xml:get_element(exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), status), <<"code">>, <<>>) of
-        <<>>      -> ok;
-        <<"307">> -> timer:sleep(1000), muc_autojoin();
-        _W        -> ok;
+muc_getdata(Conf, Nick, Presence, Raw) ->
+    MyNick = urusai_db:get(<<"muc_nick_", Conf/binary>>),
+    case muc_statuscode(Raw) of
+        307 when Nick =:= MyNick -> muc_autojoin();
+        _ -> ok
     end,
     case exmpp_xml:get_element(exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), item) of
         undefined ->
@@ -353,6 +353,13 @@ muc_getdata(Presence, Raw) ->
         Data ->
             list_to_tuple([Presence] ++ [ exmpp_xml:get_attribute(Data, A, <<>>)
                 || A <- [<<"jid">>, <<"affiliation">>, <<"role">>, <<"nick">>] ])
+    end.
+
+muc_statuscode(Raw) ->
+    case exmpp_xml:get_attribute(exmpp_xml:get_element(
+            exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), status), <<"code">>, <<>>) of
+        <<>> -> 0;
+        B    -> binary_to_integer(B)
     end.
 
 muc_presence_match(From, Jid, Data) ->
