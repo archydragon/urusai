@@ -11,6 +11,11 @@
 -include_lib ("deps/exmpp/include/exmpp.hrl").
 -include_lib ("deps/exmpp/include/exmpp_client.hrl").
 
+-record (state, {
+    session = [],
+    queue = []
+}).
+
 -record (muc_member, {
     nick = <<>>,
     jid = <<>>,
@@ -43,7 +48,8 @@ start_link() ->
 %% ------------------------------------------------------------------
 
 init(_Args) ->
-    connect().
+    {ok, #state{session = connect(), queue = queue:new()}}.
+
 handle_call({muc_join, Muc, Params}, _From, State) ->
     {reply, muc_join(Muc, Params, []), State};
 handle_call({muc_join_protected, Muc, Params}, _From, State) ->
@@ -61,23 +67,33 @@ handle_call({api_plugin, Target, Body}, _From, State) ->
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast({set_session, Session}, _State) ->
-    {noreply, Session};
+handle_cast({set_session, Session}, State) ->
+    NewState = State#state{session = Session},
+    {noreply, NewState};
 handle_cast({muc_leave, Muc}, State) ->
     timer:sleep(1000),
     muc_leave(Muc),
     {noreply, State};
-handle_cast({send_packet, Packet}, Session) ->
-    send_packet(Session, Packet),
-    {noreply, Session};
+handle_cast({send_packet, Packet}, #state{queue = Q} = State) ->
+    NewState = State#state{queue = queue:in(Packet, Q)},
+    {noreply, NewState};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+handle_info(queue_loop, State) ->
+    {Item, NewQueue} = queue:out(State#state.queue),
+    case Item of
+        empty      -> ok;
+        {value, V} -> send_packet(State#state.session, V)
+    end,
+    NewState = State#state{queue = NewQueue},
+    erlang:send_after(1000, ?MODULE, queue_loop),
+    {noreply, NewState};
 handle_info(stop, State) ->
     {stop, normal, shutdown_ok, State};
-handle_info(Packet, Session) ->
-    spawn_link(?MODULE, parse_packet, [Session, Packet]),
-    {noreply, Session}.
+handle_info(Packet, State) ->
+    spawn_link(?MODULE, parse_packet, [State#state.session, Packet]),
+    {noreply, State}.
 
 terminate(_Reason, _State) ->
     ok.
@@ -115,9 +131,10 @@ connect() ->
     exmpp_session:login(Session),
     gen_server:cast(?SERVER, {set_session, Session}),
     lager:info("Connected."),
+    ?MODULE ! queue_loop,
     update_status(),
     muc_autojoin(),
-    {ok, Session}.
+    Session.
 
 %% Send formed package
 send_packet(Session, Message) ->
