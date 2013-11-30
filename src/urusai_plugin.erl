@@ -60,8 +60,21 @@ plugins(Type) ->
     gen_server:call(?MODULE, {plugins, Type}).
 
 %% Find matching triggers and execute appropriate Python functions
-match(_Tyoe, _From, _FromJID, [Value]) when Value =:= undefined ->
+match(_Type, _From, _FromJID, [Value]) when Value =:= undefined ->
     [none];
+match(Type, From, FromJID, [Value]) when is_tuple(Value) andalso Type =:= mucpresence ->
+    [BaseJid | _] = binary:split(From, <<"/">>),
+    Actions = ets:tab2list(Type),
+    case Actions of
+        [] -> [none];
+        _  -> [ run(
+                    Type,
+                    C#plugin.module,
+                    C#plugin.method,
+                    [From, FromJID, Value],
+                    lists:member(C#plugin.module, urusai_db:get(<<"muc_plugins_", BaseJid/binary>>))) 
+              || C <- Actions ]
+    end;
 match(Type, From, FromJID, [Value]) ->
     [BaseJid | _] = binary:split(From, <<"/">>),
     Actions = ets:tab2list(Type),

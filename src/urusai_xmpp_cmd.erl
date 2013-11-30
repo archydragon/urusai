@@ -50,19 +50,19 @@ cmd(<<"o">>, [Params]) ->
 cmd(<<"muc">>, [Params]) ->
     [Action | [Tail]] = binary:split(Params, <<" ">>),
     [Muc | P] = binary:split(Tail, <<" ">>),
-    gen_server:call(urusai_xmpp, case Action of
+    case Action of
         X when X == <<"join">> orelse X == <<"j">> ->
-            {muc_join, Muc, P};
+            gen_server:call(urusai_xmpp, {muc_join, Muc, P});
         X when X == <<"pjoin">> orelse X == <<"pj">> ->
-            {muc_join_protected, Muc, P};
+            gen_server:call(urusai_xmpp, {muc_join_protected, Muc, P});
         X when X == <<"leave">> orelse X == <<"l">> ->
-            {muc_leave, Muc};
+            gen_server:call(urusai_xmpp, {muc_leave, Muc});
         X when X == <<"nick">> orelse X == <<"n">> ->
-            {muc_nick, Muc, P};
+            gen_server:call(urusai_xmpp, {muc_nick, Muc, P});
         % TODO: implement kick and ban triggers ^_^
         _ ->
             {ok, <<"Bad parameters.">>}
-    end);
+    end;
 cmd(<<"m">>, [Params]) ->
     cmd(<<"muc">>, [Params]);
 %% List of loaded plugin triggers

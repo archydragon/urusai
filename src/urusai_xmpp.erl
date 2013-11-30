@@ -45,19 +45,19 @@ start_link() ->
 init(_Args) ->
     connect().
 handle_call({muc_join, Muc, Params}, _From, State) ->
-    {reply, muc_join(State, Muc, Params, []), State};
+    {reply, muc_join(Muc, Params, []), State};
 handle_call({muc_join_protected, Muc, Params}, _From, State) ->
-    {reply, muc_join_protected(State, Muc, Params), State};
+    {reply, muc_join_protected(Muc, Params), State};
 handle_call({muc_leave, Muc}, _From, State) ->
-    {reply, muc_leave(State, Muc), State};
+    {reply, muc_leave(Muc), State};
 handle_call({muc_nick, Muc, Nick}, _From, State) ->
-    {reply, muc_nick(State, Muc, Nick), State};
+    {reply, muc_nick(Muc, Nick), State};
 handle_call({status, Message}, _From, State) ->
-    {reply, status_message(State, Message), State};
+    {reply, status_message(Message), State};
 handle_call({api_message, Target, Body}, _From, State) ->
-    {reply, api_message(State, Target, Body), State};
+    {reply, api_message(Target, Body), State};
 handle_call({api_plugin, Target, Body}, _From, State) ->
-    {reply, api_plugin(State, Target, Body), State};
+    {reply, api_plugin(Target, Body), State};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
@@ -65,7 +65,7 @@ handle_cast({set_session, Session}, _State) ->
     {noreply, Session};
 handle_cast({muc_leave, Muc}, State) ->
     timer:sleep(1000),
-    muc_leave(State, Muc),
+    muc_leave(Muc),
     {noreply, State};
 handle_cast({send_packet, Packet}, Session) ->
     send_packet(Session, Packet),
@@ -102,7 +102,6 @@ connect() ->
         _                     -> ConnServer = GetServer, Server = GetServer
     end,
 
-    % TODO: implement SSL
     Session = exmpp_session:start(),
     JID = exmpp_jid:make(User, Server, Resource),
     lager:info("Trying to connect as ~s@~s to the server ~s:~B", [User, Server, ConnServer, Port]),
@@ -114,10 +113,10 @@ connect() ->
     end,
     {ok, _Stream} = exmpp_session:ConnectMethod(Session, ConnServer, Port),
     exmpp_session:login(Session),
-    lager:info("Connected."),
-    update_status(Session),
-    muc_autojoin(Session),
     gen_server:cast(?SERVER, {set_session, Session}),
+    lager:info("Connected."),
+    update_status(),
+    muc_autojoin(),
     {ok, Session}.
 
 %% Send formed package
@@ -133,51 +132,51 @@ parse_packet(Session, Packet) ->
         #received_packet{packet_type=message,
                                   raw_packet=Raw,
                                   type_attr=Type} when Type =:= "groupchat" ->
-            handle_muc_message(Session, Raw);
+            handle_muc_message(Raw);
         % Private message
         #received_packet{packet_type=message,
                                   raw_packet=Raw,
                                   type_attr=Type} when Type =/= "error" ->
-            handle_private(Session, Raw);
+            handle_private(Raw);
         % IQ message
         #received_packet{packet_type=iq,
                                   raw_packet=Raw,
                                   type_attr=_Type} ->
-            handle_iq(Session, Raw);
+            handle_iq(Raw);
         % Presence
         Record when Record#received_packet.packet_type == 'presence' ->
-            handle_presence(Session, Record, Record#received_packet.raw_packet);
+            handle_presence(Record, Record#received_packet.raw_packet);
         _Other ->
             lager:error("Unknown packet received: ~p", [Packet])
     end.
 
 %% MUC message handler
-handle_muc_message(Session, Packet) ->
+handle_muc_message(Packet) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, <<"unknown">>),
     [Muc | User] = binary:split(From, <<"/">>),
-    handle_muc_message(Session, Packet, From, urusai_db:get(<<"muc_nick_", Muc/binary>>) =:= User).
+    handle_muc_message(Packet, From, urusai_db:get(<<"muc_nick_", Muc/binary>>) =:= User).
 
-handle_muc_message(_Session, _Packet, _From, true) ->
+handle_muc_message(_Packet, _From, true) ->
     ok;
-handle_muc_message(Session, Packet, From, false) ->
+handle_muc_message(Packet, From, false) ->
     Me = exmpp_xml:get_attribute(Packet, <<"to">>, <<"unknown">>),
     Command = exmpp_message:get_body(Packet),
     Matched = urusai_plugin:match(mucmessage, From, get_real_jid(From), [Command]),
     case lists:filter(fun(X) -> X =/= none end, Matched) of
         []    -> ok;
-        Other -> [send_packet(Session, make_muc_packet(Me, From, E)) || E <- Other]
+        Other -> [gen_server:cast(?MODULE, {send_packet, make_muc_packet(Me, From, E)}) || E <- Other]
     end.
 
 %% Private message handler
-handle_private(Session, Packet) ->
+handle_private(Packet) ->
     From = exmpp_xml:get_attribute(Packet, <<"from">>, <<"unknown">>),
     Me = exmpp_xml:get_attribute(Packet, <<"to">>, <<"unknown">>),
     IsMucUser = binary:match(From, <<"@conference.">>) =/= nomatch,
-    handle_private(Session, Packet, is_owner(From, IsMucUser), IsMucUser, From, Me).
+    handle_private(Packet, is_owner(From, IsMucUser), IsMucUser, From, Me).
 
 %% Parse private message if it has been sent by MUC owner
 %% TODO: optimize ownership code
-handle_private(Session, Packet, true, true, Target, Me) ->
+handle_private(Packet, true, true, Target, Me) ->
     Command = exmpp_message:get_body(Packet),
     [Muc | _] = binary:split(Target, <<"/">>),
     [C | P] = binary:split(Command, <<" ">>),
@@ -185,9 +184,9 @@ handle_private(Session, Packet, true, true, Target, Me) ->
         {ok, Reply} -> Reply;
         error       -> <<"Bad command.">>
     end,
-    send_packet(Session, make_private_packet(Me, Target, Body));
+    gen_server:cast(?MODULE, {send_packet, make_private_packet(Me, Target, Body)});
 %% Parse private message if it has been sent by bot owner
-handle_private(Session, Packet, true, false, Target, Me) ->
+handle_private(Packet, true, false, Target, Me) ->
     Command = exmpp_message:get_body(Packet),
     [C | P] = binary:split(Command, <<" ">>),
     % In case owner want to execute some plugin command, he should send it with `exec ` prefix
@@ -195,24 +194,24 @@ handle_private(Session, Packet, true, false, Target, Me) ->
         {ok, Reply} -> Reply;
         error       -> <<"Bad internal command.">>
     end,
-    send_packet(Session, make_private_packet(Me, Target, PBody));
+    gen_server:cast(?MODULE, {send_packet, make_private_packet(Me, Target, PBody)});
 %% Or if it has been sent by somebody else
-handle_private(Session, Packet, false, _, Target, Me) ->
+handle_private(Packet, false, _, Target, Me) ->
     Command = exmpp_message:get_body(Packet),
     case urusai_plugin:match(private, Target, <<>>, [Command]) of
         [none] -> 
-            send_packet(Session, make_private_packet(Me, Target, <<"No such command.">>));
+            gen_server:cast(?MODULE, {send_packet, make_private_packet(Me, Target, <<"No such command.">>)});
         Replies ->
-            [send_packet(Session, make_private_packet(Me, Target, E)) || E <- Replies]
+            [gen_server:cast(?MODULE, {send_packet, make_private_packet(Me, Target, E)}) || E <- Replies]
     end.
 
 %% IQ handler
-handle_iq(_Session, _Packet) ->
+handle_iq(_Packet) ->
     % TODO: implement %)
     ok.
 
 %% Presence handler
-handle_presence(Session, Packet, _Presence) ->
+handle_presence(Packet, _Presence) ->
     case exmpp_jid:make({Conf, Serv, Nick} = Packet#received_packet.from) of
         JID ->
             C = <<Conf/binary, "@", Serv/binary>>,
@@ -222,15 +221,15 @@ handle_presence(Session, Packet, _Presence) ->
                 "unavailable" ->
                     muc_userleft(C, Nick, Packet#received_packet.raw_packet);
                 "subscribe" ->
-                    presence_subscribed(Session, JID),
-                    presence_subscribe(Session, JID);
+                    presence_subscribed(JID),
+                    presence_subscribe(JID);
                 "subscribed" ->
-                    presence_subscribed(Session, JID),
-                    presence_subscribe(Session, JID);
+                    presence_subscribed(JID),
+                    presence_subscribe(JID);
                 "error" ->
                     M = <<Conf/binary, "@", Serv/binary>>,
                     urusai_db:set(<<"autojoin">>, lists:delete(M, urusai_db:get(<<"autojoin">>))),
-                    alert(Session, <<"Failed to join MUC ", M/binary>>),
+                    alert(<<"Failed to join MUC ", M/binary>>),
                     ok
             end
     end.
@@ -239,16 +238,16 @@ handle_presence(Session, Packet, _Presence) ->
 %% Presence actions
 %% ----------------------------------------
 
-presence_subscribed(Session, Recipient) ->
+presence_subscribed(Recipient) ->
     lager:info("Exchanging subscriptions with ~s", [Recipient]),
     Presence_Subscribed = exmpp_presence:subscribed(),
     Presence = exmpp_stanza:set_recipient(Presence_Subscribed, Recipient),
-    send_packet(Session, Presence).
+    gen_server:cast(?MODULE, {send_packet, Presence}).
 
-presence_subscribe(Session, Recipient) ->
+presence_subscribe(Recipient) ->
     Presence_Subscribe = exmpp_presence:subscribe(),
     Presence = exmpp_stanza:set_recipient(Presence_Subscribe, Recipient),
-    send_packet(Session, Presence).
+    gen_server:cast(?MODULE, {send_packet, Presence}).
 
 %% ----------------------------------------
 %% MUC actions
@@ -266,7 +265,7 @@ make_muc_packet(Me, ConfUser, Body) ->
             exmpp_xml:set_attribute(
                 BodyX, <<"from">>, Me), <<"to">>, To), <<"type">>, <<"groupchat">>).
 
-muc_join(Session, Muc, Params, PacketBody) ->
+muc_join(Muc, Params, PacketBody) ->
     OldNick = urusai_db:get(<<"muc_nick_", Muc/binary>>),
     Nick = case Params of
         [] when OldNick =:= [] -> list_to_binary(urusai_config:get(muc, default_nick));
@@ -274,7 +273,7 @@ muc_join(Session, Muc, Params, PacketBody) ->
         _                      -> list_to_binary(Params)
     end,
     Presence = muc_join_packet(Muc, Nick, PacketBody),
-    send_packet(Session, Presence),
+    gen_server:cast(?MODULE, {send_packet, Presence}),
     lager:info("Joining MUC ~s as ~s", [Muc, Nick]),
     urusai_db:set(<<"autojoin">>, lists:usort(lists:append(urusai_db:get(<<"autojoin">>), [Muc]))),
     urusai_db:set(<<"muc_nick_", Muc/binary>>, Nick),
@@ -282,12 +281,12 @@ muc_join(Session, Muc, Params, PacketBody) ->
     urusai_db:set(<<"muc_users_", Muc/binary>>, []),
     {ok, <<"Presence sent.">>}.
 
-muc_join_protected(_Session, _Muc, []) ->
+muc_join_protected(_Muc, []) ->
     {ok, <<"Please specify the password for joining password protected MUC.">>};
-muc_join_protected(Session, Muc, [Password]) ->
+muc_join_protected(Muc, [Password]) ->
     P = exmpp_xml:set_children(exmpp_xml:element('http://jabber.org/protocol/muc', x),
         [exmpp_xml:set_cdata(exmpp_xml:element(password), Password)]),
-    muc_join(Session, Muc, [], [P]).
+    muc_join(Muc, [], [P]).
 
 muc_join_packet(Muc, Nick, Children) ->
     RP = exmpp_xml:set_attribute(
@@ -295,68 +294,66 @@ muc_join_packet(Muc, Nick, Children) ->
         <<"to">>, <<Muc/binary, "/", Nick/binary>>),
     exmpp_xml:set_children(RP, Children).
 
-muc_leave(Session, Muc) ->
+muc_leave(Muc) ->
     RP = exmpp_presence:set_status(exmpp_presence:unavailable(), "kthxbye"),
     Presence = exmpp_xml:set_attribute(RP, <<"to">>, <<Muc/binary>>),
-    send_packet(Session, Presence),
+    gen_server:cast(?MODULE, {send_packet, Presence}),
     lager:info("Leaving MUC ~s", [Muc]),
     urusai_db:set(<<"autojoin">>, lists:delete(Muc, urusai_db:get(<<"autojoin">>))),
     {ok, <<"Presence sent.">>}.
 
-muc_nick(Session, Muc, [Nick]) ->
+muc_nick(Muc, [Nick]) ->
     RP = exmpp_presence:set_status(exmpp_presence:available(), urusai_db:get(<<"status">>)),
     Presence = exmpp_xml:set_attribute(RP, <<"to">>, <<Muc/binary, "/", Nick/binary>>),
-    send_packet(Session, Presence),
+    gen_server:cast(?MODULE, {send_packet, Presence}),
     lager:info("Changed nick at MUC ~s to ~s", [Muc, Nick]),
     urusai_db:set(<<"muc_nick_", Muc/binary>>, Nick),
     {ok, <<"Presence sent.">>}.
 
-muc_autojoin(Session) ->
-    [ muc_join(Session, A, [], urusai_db:get(<<"muc_password_", A/binary>>)) || A <- urusai_db:get(<<"autojoin">>) ].
+muc_autojoin() ->
+    [ muc_join(A, [], urusai_db:get(<<"muc_password_", A/binary>>)) || A <- urusai_db:get(<<"autojoin">>) ].
 
 muc_userjoined(Conf, Nick, Raw) ->
-    muc_userjoined_save(Conf, Nick, muc_getdata(Raw)).
+    muc_userjoined_save(Conf, Nick, muc_getdata(<<"available">>, Raw)).
 
 muc_userjoined_save(_Conf, _Nick, ok) ->
     ok;
-muc_userjoined_save(Conf, Nick, {Jid, Affiliation, Role}) ->
+muc_userjoined_save(Conf, Nick, {_Presence, Jid, Affiliation, Role, _NewNick} = Data) ->
     User = #muc_member{
         nick = Nick,
         jid = Jid,
         affiliation = Affiliation,
         role = Role
     },
-    muc_presence_match(<<Conf/binary, "/", Nick/binary>>, Jid, "available", Affiliation, Role),
+    muc_presence_match(<<Conf/binary, "/", Nick/binary>>, Jid, Data),
     MucK = <<"muc_users_", Conf/binary>>,
     urusai_db:set(MucK, lists:append(urusai_db:get(MucK), [User])),
     ok.
 
 muc_userleft(Conf, Nick, Raw) ->
-    muc_userleft_save(Conf, Nick, muc_getdata(Raw)).
+    muc_userleft_save(Conf, Nick, muc_getdata(<<"unavailable">>, Raw)).
 
 muc_userleft_save(_Conf, _Nick, ok) ->
     ok;
-muc_userleft_save(Conf, Nick, {Jid, _Affiliation, _Role}) ->
-    muc_presence_match(<<Conf/binary, "/", Nick/binary>>, Jid, "unavailable", "", ""),
+muc_userleft_save(Conf, Nick, {_Presence, Jid, _Affiliation, _Role, _NewNick} = Data) ->
+    muc_presence_match(<<Conf/binary, "/", Nick/binary>>, Jid, Data),
     MucK = <<"muc_users_", Conf/binary>>,
     urusai_db:set(MucK, lists:filter(fun(X) -> X#muc_member.nick =/= Nick end, urusai_db:get(MucK))),
     ok.
 
-muc_getdata(Raw) ->
+muc_getdata(Presence, Raw) ->
     case exmpp_xml:get_element(exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), item) of
         undefined ->
             ok;
         Data ->
-            list_to_tuple([ exmpp_xml:get_attribute(Data, A, <<>>)
-                || A <- [<<"jid">>, <<"affiliation">>, <<"role">>] ])
+            list_to_tuple([Presence] ++ [ exmpp_xml:get_attribute(Data, A, <<>>)
+                || A <- [<<"jid">>, <<"affiliation">>, <<"role">>, <<"nick">>] ])
     end.
 
-muc_presence_match(From, Jid, Presence, Affiliation, Role) ->
-    Msg = list_to_binary(io_lib:format("~s|~s|~s", [Presence, Affiliation, Role])),
-    Matched = urusai_plugin:match(mucpresence, From, Jid, [Msg]),
+muc_presence_match(From, Jid, Data) ->
+    Matched = urusai_plugin:match(mucpresence, From, Jid, [Data]),
     case lists:filter(fun(X) -> X =/= none end, Matched) of
         []    -> ok;
-        % Other -> [send_packet(Session, make_muc_packet(Me, From, E)) || E <- Other]
         Other -> [ gen_server:cast(?MODULE, {send_packet, make_muc_packet(current_jid(), From, E)}) || E <- Other ]
     end.
 
@@ -388,38 +385,38 @@ make_private_packet(From, To, Body) ->
             BodyX, <<"from">>, From), <<"to">>, To).
 
 %% Send alert 
-alert(Session, Msg) ->
+alert(Msg) ->
     lager:error("Alert: ~s", [Msg]),
     Me = current_jid(),
-    [ send_packet(Session, make_private_packet(Me, O, Msg)) || O <- urusai_db:get(<<"owners">>) ].
+    [ gen_server:cast(?MODULE, {send_packet, make_private_packet(Me, O, Msg)}) || O <- urusai_db:get(<<"owners">>) ].
 
 %% ----------------------------------------
 %% HTTP API handlers
 %% ----------------------------------------
 
 %% Handler for HTTP API messages
-api_message(Session, Target, Body) ->
+api_message(Target, Body) ->
     case make_api_packet(Target, Body, target_type(Target)) of
         not_joined ->
             {error, not_joined};
         Packet ->
-            send_packet(Session, Packet),
+            gen_server:cast(?MODULE, {send_packet, Packet}),
             {ok, sent}
     end.
 
 %% Handler for HTTP API plugin requests
-api_plugin(Session, Target, Body) ->
+api_plugin(Target, Body) ->
     {Joined, Type} = target_type(Target),
-    api_plugin(Session, Target, Body, Type, Joined).
+    api_plugin(Target, Body, Type, Joined).
 
-api_plugin(_Session, _Target, _Body, _Type, false) ->
+api_plugin(_Target, _Body, _Type, false) ->
     {error, not_joined};
-api_plugin(Session, Target, Body, Type, true) ->
+api_plugin(Target, Body, Type, true) ->
     case urusai_plugin:match(Type, Target, [], [Body]) of
         [none] ->
             {error, no_appropriate_plugins};
         Replies ->
-            [send_packet(Session, make_api_packet(Target, E, {true, Type})) || E <- Replies],
+            [gen_server:cast(?MODULE, {send_packet, make_api_packet(Target, E, {true, Type})}) || E <- Replies],
             {ok, sent}
     end.
 
@@ -466,12 +463,12 @@ is_joined(Jid) ->
     lists:member(Muc, MUCs).
 
 %% Update status message trigger
-status_message(Session, Msg) ->
+status_message(Msg) ->
     urusai_db:set(<<"status">>, Msg),
-    update_status(Session),
+    update_status(),
     {ok, <<"Status message updated.">>}.
 
 %% Update status message
-update_status(Session) ->
+update_status() ->
     Msg = urusai_db:get(<<"status">>),
-    send_packet(Session, exmpp_presence:set_status(exmpp_presence:available(), Msg)).
+    gen_server:cast(?MODULE, {send_packet, exmpp_presence:set_status(exmpp_presence:available(), Msg)}).

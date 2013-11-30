@@ -5,6 +5,9 @@ from importlib import import_module
 from erlport.erlterms import List, Atom
 from erlport.erlang import call
 
+API = Atom("urusai_erlapi")
+PREFIX = "external_"
+
 class UrusaiPlugin:
     """
     Main plugin class.
@@ -107,7 +110,7 @@ def getAvailablePlugins():
     """
     "Callback" to Erlang to get available plugins for MUC.
     """
-    return call(Atom("urusai_erlapi"), Atom("available_plugins"), [])
+    return call(API, Atom("available_plugins"), [])
 
 def getPluginDocs(muc, module):
     if muc and not module in getAvailablePlugins(muc):
@@ -127,3 +130,9 @@ def getPluginDocs(muc, module):
             except:
                 return "No such module."
     return "\n".join(out)
+
+def dbGet(key):
+    return call(API, Atom("db_get"), [PREFIX + key])
+
+def dbSet(key, value):
+    return call(API, Atom("db_set"), [PREFIX + key, value])

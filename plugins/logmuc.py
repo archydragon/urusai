@@ -44,15 +44,25 @@ class pluginLogMucPresences(urusai_plugin.MucPresence):
     triggers = { "": "Log" }
 
     @staticmethod
-    def triggerLog(fromName, fromJid, message):
+    def triggerLog(fromName, fromJid, params):
+        (presence, fromJid, affiliation, role, newNick) = params
         msg_join_fmt = "*** {0} has joined the room as {1} and {2}"
         msg_left_fmt = "*** {0} has left the room"
+        msg_nick_fmt = "*** {0} is now known as {1}"
         [muc, author] = fromName.split("/", 1)
-        look = re.match(r"^available\|(.+)\|(.+)$", message)
-        if not look:
-            presence = msg_left_fmt.format(author)
+        lastRenamed = urusai_plugin.dbGet(muc + "_lastrenamed")
+        if presence == "available" and lastRenamed != author:
+            presence = msg_join_fmt.format(author, affiliation, role)
         else:
-            presence = msg_join_fmt.format(author, look.group(1), look.group(2))
+            if newNick:
+                presence = msg_nick_fmt.format(author, newNick)
+                urusai_plugin.dbSet(muc + "_lastrenamed", newNick)
+            else:
+                if lastRenamed != author:
+                    presence = msg_left_fmt.format(author)
+                else:
+                    urusai_plugin.dbSet(muc + "_lastrenamed", '')
+                    return ''
         now = datetime.now()
         f = now.strftime(FILE_FMT.format(muc))
         e = now.strftime(STRING_FMT.format(presence))
