@@ -1,4 +1,8 @@
-## 0.0.3-dev
+## 0.0.4-dev
+
+_Just released 0.0.3. Stay tuned._
+
+## 0.0.3
 
   * A piece of control possibilities for MUCs' owners
   * Load/unload plugins mechanism for MUCs

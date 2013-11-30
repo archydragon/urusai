@@ -1,5 +1,5 @@
-Urusai 0.0.3-dev
-================
+Urusai 0.0.3
+============
 
 Jabber (XMPP) bot with extendability using Python plugins.
 
@@ -196,7 +196,6 @@ Otherwise the result will be ``"error"`` with the details in ``"message"`` field
 TODO
 ----
 
-  * **normal** MUC presence plugins API
   * IQ handler
   * more features for plugin returning values
 
