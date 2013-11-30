@@ -47,7 +47,10 @@ run(Type, _Module, _Function, _Args, false) when Type =:= mucmessage ->
     none;
 run(_Type, Module, Function, Args, _) ->
     try
-        call_pool_member(Module, Function, Args)
+        case call_pool_member(Module, Function, Args) of
+            <<>> -> none;
+            Else -> Else
+        end
     catch exit:{timeout, _} ->
         list_to_binary(io_lib:format("Call to the method '~s' (module '~s') timed out.", [Function, Module]))
     end.
