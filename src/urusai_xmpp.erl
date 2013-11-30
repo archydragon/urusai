@@ -331,7 +331,7 @@ muc_autojoin() ->
     [ muc_join(A, [], urusai_db:get(<<"muc_password_", A/binary>>)) || A <- urusai_db:get(<<"autojoin">>) ].
 
 muc_userjoined(Conf, Nick, Raw) ->
-    muc_userjoined_save(Conf, Nick, muc_getdata(Conf, Nick, <<"available">>, Raw)).
+    muc_userjoined_save(Conf, Nick, muc_getdata(Conf, Nick, <<"join">>, Raw)).
 
 muc_userjoined_save(_Conf, _Nick, ok) ->
     ok;
@@ -348,7 +348,7 @@ muc_userjoined_save(Conf, Nick, {_Presence, Jid, Affiliation, Role, _NewNick} = 
     ok.
 
 muc_userleft(Conf, Nick, Raw) ->
-    muc_userleft_save(Conf, Nick, muc_getdata(Conf, Nick, <<"unavailable">>, Raw)).
+    muc_userleft_save(Conf, Nick, muc_getdata(Conf, Nick, <<"leave">>, Raw)).
 
 muc_userleft_save(_Conf, _Nick, ok) ->
     ok;
@@ -360,15 +360,17 @@ muc_userleft_save(Conf, Nick, {_Presence, Jid, _Affiliation, _Role, _NewNick} = 
 
 muc_getdata(Conf, Nick, Presence, Raw) ->
     MyNick = urusai_db:get(<<"muc_nick_", Conf/binary>>),
-    case muc_statuscode(Raw) of
-        307 when Nick =:= MyNick -> muc_autojoin();
-        _ -> ok
+    Type = case muc_statuscode(Raw) of
+        307 when Nick =:= MyNick -> muc_autojoin(), <<"kick">>;
+        307                      -> <<"kick">>;
+        301                      -> <<"ban">>;
+        _                        -> Presence
     end,
     case exmpp_xml:get_element(exmpp_xml:get_element(Raw, 'http://jabber.org/protocol/muc#user', x), item) of
         undefined ->
             ok;
         Data ->
-            list_to_tuple([Presence] ++ [ exmpp_xml:get_attribute(Data, A, <<>>)
+            list_to_tuple([Type] ++ [ exmpp_xml:get_attribute(Data, A, <<>>)
                 || A <- [<<"jid">>, <<"affiliation">>, <<"role">>, <<"nick">>] ])
     end.
 

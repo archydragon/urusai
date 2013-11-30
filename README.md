@@ -120,9 +120,17 @@ Plugin class' docstrings are used for generation of ``help`` plugin output.
 Trigger method name should start from 'trigger' and being preceded by ``@staticmethod`` decorator.
 
 Trigger method should has three parameters:
-    * 1st — JID or conference JID/nickname of message sender
-    * 2nd — real JID of sender (used only for MUC plugins) (if real JIDs are not accessible for bot's role, there will be empty string)
-    * 3rd — origin message body for ``Private`` and ``MucMessage`` types and a tuple of (``presence``, ``fromJid``, ``affiliation``, ``role``, ``newNick``) for ``MucPresence`` one
+
+  * 1st — JID or conference JID/nickname of message sender
+  * 2nd — real JID of sender (used only for MUC plugins) (if real JIDs are not accessible for bot's role, there will be empty string)
+  * 3rd — origin message body for ``Private`` and ``MucMessage`` types and a tuple of (``presenceType``, ``fromJid``, ``affiliation``, ``role``, ``newNick``) for ``MucPresence`` one
+
+``presenceType`` could has the following values:
+
+  * ``join`` — user joined MUC
+  * ``leave`` — user left MUC
+  * ``kick`` — user has been kicked from MUC
+  * ``ban`` — user has been banned from MUC
     
 Method should return string with the message which will be send back to the user or MUC. If the string is ``''``, nothing will be sent.
 

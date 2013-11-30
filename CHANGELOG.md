@@ -3,7 +3,7 @@
   * A piece of control possibilities for MUCs' owners
   * Load/unload plugins mechanism for MUCs
   * Plugins can be grouped under subdirectories
-  * Basic ``mucpresence`` plugins type implementation
+  * ``mucpresence`` plugins type implementation
   * Plugins now are able to keep some data in bot's KV-database
   * HTTP API can be disabled for private messages and for specific MUCs
   * ``logmuc`` plugin
