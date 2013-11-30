@@ -88,59 +88,55 @@ Plugin API
 
 All the plugins are stored in modules with ``.py`` or ``.pyc`` extension under ``plugins`` directory. To make its management more easy, you may create subdirectories there and move plugin modules to them (multiple directory nesting level is allowed). There should be empty ``__init__.py`` file under an every directory containing plugins you need to use.
 
-Example of plugin module source code:
+### Plugin module code structure:
+
+The only strongly required import for plugin modules is ``urusai_plugin``.
 
 ```python
 # -*- coding: utf-8 -*-
 
-import urusai_plugin # required for plugin correct work
-from datetime import datetime
+import urusai_plugin
+from datetime import datetime  # module specific import
+```
 
-# Plugin class name should start from 'plugin' and be inherited from
-# 'urusai_plugin.Private' class for working with messages sent to
-# the bot directly.
+Plugin class name should start from 'plugin' and be inherited from one of the following classes:
+
+  * ``urusai_plugin.Private`` — to handle the messages sent to the bot directly
+  * ``urusai_plugin.MucMessage`` — to handle the messages sent to groupchats
+  * ``urusai_plugin.MucPresence`` — to handle presence changes in groupchats
+
+```python
 class pluginTime(urusai_plugin.Private):
-    # Docstrings are also used as the source of `help` plugin's
-    # output generation.
-    """
-    This plugin class implements replying current time for any user
-    sent 'time' string to bot.
-    """
-    # 'triggers' dict as class property is strongly required.
-    # Every key in dict is regular expression (without 'r' prefix!)
-    # used for plugin action triggering, and every value is the name
-    # of method running when key regexp triggered.
-    triggers = { "^time": "Time" }
+```
 
-    # Trigger method name should start from 'trigger' and being
-    # preceded by '@staticmethod' decorator.
-    # Trigger method should has three parameters:
-    #   1st — JID or conference JID/nickname of message sender
-    #   2nd — real JID of sender (used only for MUC plugins)
-    #   3rd — origin message body
-    # Method should return string with the message which will be
-    # send back to the user or MUC.
+Plugin class' docstrings are used for generation of ``help`` plugin output.
+
+``triggers`` dict is strongly required class property. Every key in dict is regular expression (without 'r' prefix!) used for plugin action triggering, and every value is the name of method running when key regexp triggered. The only exceptions are presence-typed plugins which currently don't use regular expressions and should have the only key-value pair with any key.
+
+```python
+    triggers = { "^time": "Time" }
+```
+
+Trigger method name should start from 'trigger' and being preceded by ``@staticmethod`` decorator.
+
+Trigger method should has three parameters:
+    * 1st — JID or conference JID/nickname of message sender
+    * 2nd — real JID of sender (used only for MUC plugins) (if real JIDs are not accessible for bot's role, there will be empty string)
+    * 3rd — origin message body for ``Private`` and ``MucMessage`` types and a tuple of (``presence``, ``fromJid``, ``affiliation``, ``role``, ``newNick``) for ``MucPresence`` one
+    
+Method should return string with the message which will be send back to the user or MUC. If the string is ``''``, nothing will be sent.
+
+```python
     @staticmethod
     def triggerTime(fromName, fromJid, message):
         return str(datetime.now())
-
-# Inheritance from 'urusai_plugin.MucMessage' is used for plugins
-# that may be triggered from MUC chats. All other information about
-# 'triggers' property and writing methods is the same.
-class pluginTimeChat(urusai_plugin.MucMessage):
-    triggers = { "^time": "Time" }
-
-    @staticmethod
-    def triggerTime(fromName, fromJid, message):
-        return str(datetime.now())
-
 ```
 
 All other classes and methods inside modules are not parsed and may be used for coding convenience.
 
 **Plugin method execution time is limited to 60 seconds.**
 
-More plugin examples are available under [``plugins`` directory](https://github.com/Mendor/urusai/tree/master/plugins) of this repo.
+For real plugin examples look [``plugins`` directory](https://github.com/Mendor/urusai/tree/master/plugins) of this repo.
 
 
 HTTP API
