@@ -136,6 +136,19 @@ All other classes and methods inside modules are not parsed and may be used for 
 
 **Plugin method execution time is limited to 60 seconds.**
 
+### Extra methods available in plugins
+
+Plugin management:
+  * ``urusai_plugin.getAvailablePlugins()`` — get list of loaded plugins available in private messages as space separated string
+  * ``urusai_plugin.getAvailablePlugins(muc)`` — get list of loaded plugins available in specific MUC as space separated string
+
+Bot's KV-database access:
+
+  * ``urusai_plugin.dbGet(key)`` — get the value by key from the database
+  * ``urusai_plugin.dbSet(key, value)`` — put KV-pair to the database
+
+----------
+
 For real plugin examples look [``plugins`` directory](https://github.com/Mendor/urusai/tree/master/plugins) of this repo.
 
 
