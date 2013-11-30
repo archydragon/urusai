@@ -106,7 +106,7 @@ def getAvailablePlugins(muc):
     """
     return call(Atom("urusai_erlapi"), Atom("available_plugins"), [muc])
 
-def getAvailablePlugins():
+def getAvailablePrivPlugins():
     """
     "Callback" to Erlang to get available plugins for MUC.
     """

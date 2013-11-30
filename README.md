@@ -139,7 +139,7 @@ All other classes and methods inside modules are not parsed and may be used for 
 ### Extra methods available in plugins
 
 Plugin management:
-  * ``urusai_plugin.getAvailablePlugins()`` — get list of loaded plugins available in private messages as space separated string
+  * ``urusai_plugin.getAvailablePrivPlugins()`` — get list of loaded plugins available in private messages as space separated string
   * ``urusai_plugin.getAvailablePlugins(muc)`` — get list of loaded plugins available in specific MUC as space separated string
 
 Bot's KV-database access:

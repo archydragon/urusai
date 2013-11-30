@@ -47,7 +47,7 @@ class pluginHelpPrivate(urusai_plugin.Private):
     @staticmethod
     def triggerList(fromName, fromJid, message):
         reply_fmt = "Available plugins: {0}\nTo get detailed information about module's possibility use \"help <MODULE>\"."
-        plugins = urusai_plugin.getAvailablePlugins()
+        plugins = urusai_plugin.getAvailablePrivPlugins()
         return reply_fmt.format(" ".join(plugins))
 
     @staticmethod
