@@ -1,0 +1,5 @@
+language: erlang
+install: "make deps"
+script: "make"
+otp_release:
+  - R16B
