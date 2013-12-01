@@ -153,9 +153,9 @@ connect() ->
         exmpp_session:login(Session),
         lager:info("Logged in."),
         gen_server:cast(?SERVER, {set_session, Session}),
-        ?MODULE ! queue_loop,
         update_status(),
-        muc_autojoin()
+        muc_autojoin(),
+        erlang:send_after(2000, ?MODULE, queue_loop)
     catch _:{auth_error, _} = R2 ->
         lager:info("Login error: ~p!", [R2]),
         init:stop()
