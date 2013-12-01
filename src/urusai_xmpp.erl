@@ -12,8 +12,9 @@
 -include_lib ("deps/exmpp/include/exmpp_client.hrl").
 
 -record (state, {
-    session = [],
-    queue = []
+    session,
+    queue,
+    loop_timer = []
 }).
 
 -record (muc_member, {
@@ -27,7 +28,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export ([start_link/0, parse_packet/2]).
+-export ([start_link/0, parse_packet/2, version/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -81,14 +82,19 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(queue_loop, State) ->
+    catch erlang:cancel_timer(State#state.loop_timer),
     {Item, NewQueue} = queue:out(State#state.queue),
     case Item of
         empty      -> ok;
         {value, V} -> send_packet(State#state.session, V)
     end,
-    NewState = State#state{queue = NewQueue},
-    erlang:send_after(1000, ?MODULE, queue_loop),
+    NewState = State#state{
+        queue = NewQueue,
+        loop_timer = erlang:send_after(1000, ?MODULE, queue_loop)},
     {noreply, NewState};
+handle_info(queue_stop_timer, #state{loop_timer = LoopTimer} = State) ->
+    catch erlang:cancel_timer(LoopTimer),
+    {noreply, State};
 handle_info(stop, State) ->
     {stop, normal, State};
 handle_info(Packet, State) ->
@@ -129,6 +135,7 @@ connect() ->
         false -> connect_TCP
     end,
     try
+        ?MODULE ! queue_stop_timer,
         {ok, _Stream} = exmpp_session:ConnectMethod(Session, ConnServer, Port),
         lager:info("Connected.")
     catch 

@@ -1,6 +1,7 @@
 ## 0.0.4-dev
 
   * IQ handlers for replying client version and time
+  * Fixed bot behaviour on connection lost
   * ``uptime`` command
   * ``version`` command
 
