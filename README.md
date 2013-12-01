@@ -56,6 +56,7 @@ Send to the bot subscription from JID set as owner in configuration file. Then u
 
   * ``h[elp]`` — show information about available commands
   * ``p[ing]`` — pong!
+  * ``u[ptime]`` — bot and system uptime
   * ``s[tatus] <YOUR_STATUS_MESSAGE>`` — update status message
   * ``o[wner] l[ist]`` — list of bot's owners
   * ``o[wner] a[dd] <JID>`` — add <JID> to owners list

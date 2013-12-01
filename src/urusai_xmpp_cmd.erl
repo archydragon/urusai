@@ -10,6 +10,7 @@ cmd(<<"help">>, []) ->
         "Allowed commands:\n",
         "\t\"h[elp]\" — this help\n",
         "\t\"p[ing]\" — pong!\n",
+        "\t\"u[ptime] — bot and system uptime\n"
         "\t\"s[tatus] <YOUR_STATUS_MESSAGE>\" — update status message\n",
         "\t\"o[wner] l[ist]\" — list of bot's owners\n",
         "\t\"o[wner] a[dd] <JID>\" — add <JID> to owners list\n",
@@ -31,6 +32,35 @@ cmd(<<"ping">>, []) ->
     {ok, <<"pong">>};
 cmd(<<"p">>, []) ->
     cmd(<<"ping">>, []);
+%% Get uptime details
+cmd(<<"u">>, []) ->
+    cmd(<<"uptime">>, []);
+cmd(<<"uptime">>, []) ->
+    RawBotUptime = calendar:time_difference(urusai_db:get(<<"started">>), calendar:now_to_local_time(now())),
+    RawSysUptime = case os:type() of
+        {unix, linux} ->
+            calendar:seconds_to_daystime(
+                round(list_to_float(lists:nth(1, string:tokens(os:cmd("cat /proc/uptime"), " ")))));
+        {unix, OS} when OS =:= darwin orelse OS =:= freebsd ->
+            BootTime = list_to_integer(string:strip(
+                lists:nth(4, string:tokens(os:cmd("sysctl -n kern.boottime"), " ")), both, $,)),
+            {N1, N2, _} = erlang:now(),
+            calendar:seconds_to_daystime((N1 * 1000000 + N2) - BootTime);
+        {win32, _} ->
+            BootUpTime = os:cmd("wmic os get lastbootuptime"),
+            {match, [Y, M, D, Hh, Mm, Ss]} = 
+                re:run(BootUpTime, "\n([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2}).*",
+                [{capture, all_but_first, list}]),
+            calendar:time_difference(
+                {{list_to_integer(Y), list_to_integer(M), list_to_integer(D)},
+                 {list_to_integer(Hh), list_to_integer(Mm), list_to_integer(Ss)}},
+                calendar:now_to_local_time(now()))
+        {_, _} ->
+            {0, {0, 0, 0}}
+    end,
+    Bot = time_fmt(RawBotUptime),
+    Sys = time_fmt(RawSysUptime),
+    {ok, <<"Bot uptime: ", Bot/binary, "\nSystem uptime: ", Sys/binary>>};
 %% Change status message
 cmd(<<"status">>, Message) ->
     gen_server:call(urusai_xmpp, {status, Message});
@@ -119,3 +149,7 @@ owner(<<"del">>, [Jid]) when Jid =/= <<"">> ->
 owner(_, _) ->
     H = owner(<<"help">>, []),
     <<"Invalid action.\n", H/binary>>.
+
+%% Format uptime
+time_fmt({Days, {Hours, Minutes, Seconds}}) ->
+    list_to_binary(io_lib:format("~b days ~2..0w:~2..0w:~2..0w", [Days, Hours, Minutes, Seconds])).

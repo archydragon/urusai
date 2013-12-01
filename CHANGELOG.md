@@ -1,6 +1,6 @@
 ## 0.0.4-dev
 
-_Just released 0.0.3. Stay tuned._
+  * ``uptime`` command
 
 ## 0.0.3
 

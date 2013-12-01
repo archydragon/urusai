@@ -122,6 +122,7 @@ connect() ->
     JID = exmpp_jid:make(User, Server, Resource),
     lager:info("Trying to connect as ~s@~s to the server ~s:~B", [User, Server, ConnServer, Port]),
     urusai_db:set(<<"current_jid">>, JID), % required for alerts
+    urusai_db:set(<<"started">>, calendar:now_to_local_time(now())),
     exmpp_session:auth_basic_digest(Session, JID, Password),
     ConnectMethod = case urusai_config:get(auth, ssl) of
         true  -> connect_SSL;
