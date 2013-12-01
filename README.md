@@ -1,5 +1,4 @@
-Urusai 0.0.4-dev
-================
+# Urusai 0.0.4-dev [![Build Status](https://travis-ci.org/Mendor/urusai.png)](https://travis-ci.org/Mendor/urusai)
 
 Jabber (XMPP) bot with extendability using Python plugins.
 
