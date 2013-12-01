@@ -71,7 +71,7 @@ handle_cast({set_session, Session}, State) ->
     NewState = State#state{session = Session},
     {noreply, NewState};
 handle_cast({muc_leave, Muc}, State) ->
-    timer:sleep(1000),
+    timer:sleep(200),
     muc_leave(Muc),
     {noreply, State};
 handle_cast({send_packet, Packet}, #state{queue = Q} = State) ->
@@ -90,7 +90,7 @@ handle_info(queue_loop, State) ->
     erlang:send_after(1000, ?MODULE, queue_loop),
     {noreply, NewState};
 handle_info(stop, State) ->
-    {stop, normal, shutdown_ok, State};
+    {stop, normal, State};
 handle_info(Packet, State) ->
     spawn_link(?MODULE, parse_packet, [State#state.session, Packet]),
     {noreply, State}.
@@ -128,13 +128,31 @@ connect() ->
         true  -> connect_SSL;
         false -> connect_TCP
     end,
-    {ok, _Stream} = exmpp_session:ConnectMethod(Session, ConnServer, Port),
-    exmpp_session:login(Session),
-    gen_server:cast(?SERVER, {set_session, Session}),
-    lager:info("Connected."),
-    ?MODULE ! queue_loop,
-    update_status(),
-    muc_autojoin(),
+    try
+        {ok, _Stream} = exmpp_session:ConnectMethod(Session, ConnServer, Port),
+        lager:info("Connected.")
+    catch 
+        _:{timeout, _} = R1 ->
+            lager:error("Connection failed: ~p", [R1]),
+            connect();
+        _:{socket_error, _} = R1 ->
+            lager:error("Connection failed: ~p", [R1]),
+            timer:sleep(5000),
+            connect();
+        _:R1 ->
+            lager:error("Error: ~p", [R1])
+    end,
+    try
+        exmpp_session:login(Session),
+        lager:info("Logged in."),
+        gen_server:cast(?SERVER, {set_session, Session}),
+        ?MODULE ! queue_loop,
+        update_status(),
+        muc_autojoin()
+    catch _:{auth_error, _} = R2 ->
+        lager:info("Login error: ~p!", [R2]),
+        init:stop()
+    end,
     Session.
 
 %% Send formed package
