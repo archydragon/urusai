@@ -37,9 +37,7 @@ cmd(<<"p">>, []) ->
 cmd(<<"v">>, []) ->
     cmd(<<"version">>, []);
 cmd(<<"version">>, []) ->
-    [{urusai, _, VersionString}] = lists:filter(fun({App, _, _}) -> App =:= urusai end,
-        application:loaded_applications()),
-    Version = list_to_binary(VersionString),
+    Version = urusai_xmpp:version(),
     BuildInfo = case file:read_file(".build-meta") of
         {error, _} -> 
             <<>>;

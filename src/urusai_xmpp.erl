@@ -224,8 +224,19 @@ handle_private(Packet, false, _, Target, Me) ->
     end.
 
 %% IQ handler
-handle_iq(_Packet) ->
+handle_iq(Packet) ->
     % TODO: implement %)
+    Type = exmpp_iq:get_type(Packet),
+    Request = exmpp_iq:get_request(Packet),
+    case exmpp_xml:get_ns_as_atom(Request) of
+        'jabber:iq:version' when Type =:= get ->
+            iq_client_version(Packet);
+        'urn:xmpp:time' when Type =:= get ->
+            iq_time(Packet);
+        Else ->
+            lager:info("Type: ~p Else: ~p", [Type, Else]),
+            ok
+    end,
     ok.
 
 %% Presence handler
@@ -423,6 +434,36 @@ alert(Msg) ->
     [ gen_server:cast(?MODULE, {send_packet, make_private_packet(Me, O, Msg)}) || O <- urusai_db:get(<<"owners">>) ].
 
 %% ----------------------------------------
+%% IQ actions
+%% ----------------------------------------
+
+%% IQ result generator
+make_iq_result(NS, Element, Children) ->
+    XMLChildren = [ exmpp_xml:set_cdata(exmpp_xml:element(NS, E, [], []), V) || {E, V} <- Children ],
+    exmpp_xml:set_children(exmpp_xml:element(NS, Element), [XMLChildren]).
+
+%% IQ response — client version
+iq_client_version(Request) ->
+    NS = 'jabber:iq:version',
+    Result = make_iq_result(NS, 'query', [{"name", <<"Urusai">>}, {"version", version()}]),
+    gen_server:cast(?MODULE, {send_packet, exmpp_iq:result(Request, Result)}).
+
+%% IQ response — time and timezone
+iq_time(Request) ->
+    NS = 'urn:xmpp:time',
+    RawUTC = calendar:universal_time(),
+    RawLocal = calendar:local_time(),
+    {{Y, M, D}, {Hh, Mm, Ss}} = RawUTC,
+    TimeUTC = io_lib:format("~4..0w-~2..0w-~2..0wT~2..0w:~2..0w:~2..0wZ", [Y, M, D, Hh, Mm, Ss]),
+    {Sign, DH, DM} = case calendar:time_difference(RawUTC, RawLocal) of
+        {-1, _} -> {_, {DifH, DifM, _}} = calendar:time_difference(RawLocal, RawUTC), {"-", DifH, DifM};
+        Else    -> {_, {DifH, DifM, _}} = Else, {"+", DifH, DifM}
+    end,
+    TZ = io_lib:format("~s~2..0w:~2..0w", [Sign, DH, DM]),
+    Result = make_iq_result(NS, 'time', [{"tzo", TZ}, {"utc", TimeUTC}]),
+    gen_server:cast(?MODULE, {send_packet, exmpp_iq:result(Request, Result)}).
+
+%% ----------------------------------------
 %% HTTP API handlers
 %% ----------------------------------------
 
@@ -505,3 +546,9 @@ status_message(Msg) ->
 update_status() ->
     Msg = urusai_db:get(<<"status">>),
     gen_server:cast(?MODULE, {send_packet, exmpp_presence:set_status(exmpp_presence:available(), Msg)}).
+
+%% Version info
+version() ->
+    [{urusai, _, VersionString}] = lists:filter(fun({App, _, _}) -> App =:= urusai end,
+        application:loaded_applications()),
+    list_to_binary(VersionString).

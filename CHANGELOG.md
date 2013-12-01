@@ -1,5 +1,6 @@
 ## 0.0.4-dev
 
+  * IQ handlers for replying client version and time
   * ``uptime`` command
   * ``version`` command
 

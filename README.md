@@ -198,7 +198,6 @@ Otherwise the result will be ``"error"`` with the details in ``"message"`` field
 TODO
 ----
 
-  * IQ handler
   * more features for plugin returning values
 
 
