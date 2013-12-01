@@ -1,6 +1,7 @@
 ## 0.0.4-dev
 
   * ``uptime`` command
+  * ``version`` command
 
 ## 0.0.3
 

@@ -1,5 +1,5 @@
-Urusai 0.0.3
-============
+Urusai 0.0.4-dev
+================
 
 Jabber (XMPP) bot with extendability using Python plugins.
 
@@ -56,6 +56,7 @@ Send to the bot subscription from JID set as owner in configuration file. Then u
 
   * ``h[elp]`` — show information about available commands
   * ``p[ing]`` — pong!
+  * ``v[ersion]`` — bot version information
   * ``u[ptime]`` — bot and system uptime
   * ``s[tatus] <YOUR_STATUS_MESSAGE>`` — update status message
   * ``o[wner] l[ist]`` — list of bot's owners

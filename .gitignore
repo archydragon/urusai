@@ -4,5 +4,6 @@ log
 var
 erl_crash.dump
 dev.config
+.build-meta
 *.db
 *.pyc

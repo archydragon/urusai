@@ -10,6 +10,7 @@ cmd(<<"help">>, []) ->
         "Allowed commands:\n",
         "\t\"h[elp]\" — this help\n",
         "\t\"p[ing]\" — pong!\n",
+        "\t\"v[ersion] — bot version information\n",
         "\t\"u[ptime] — bot and system uptime\n"
         "\t\"s[tatus] <YOUR_STATUS_MESSAGE>\" — update status message\n",
         "\t\"o[wner] l[ist]\" — list of bot's owners\n",
@@ -32,6 +33,24 @@ cmd(<<"ping">>, []) ->
     {ok, <<"pong">>};
 cmd(<<"p">>, []) ->
     cmd(<<"ping">>, []);
+%% Version info
+cmd(<<"v">>, []) ->
+    cmd(<<"version">>, []);
+cmd(<<"version">>, []) ->
+    [{urusai, _, VersionString}] = lists:filter(fun({App, _, _}) -> App =:= urusai end,
+        application:loaded_applications()),
+    Version = list_to_binary(VersionString),
+    BuildInfo = case file:read_file(".build-meta") of
+        {error, _} -> 
+            <<>>;
+        {ok, Content} ->
+            [BuildDate, BuildRev, _] = binary:split(Content, <<"\n">>, [global]),
+            list_to_binary(io_lib:format(" (built ~s from git rev ~s)", [BuildDate, BuildRev]))
+    end,
+    ErlVersion = list_to_binary(erlang:system_info(system_version)),
+    PyVersion = list_to_binary(os:cmd("python --version")),
+    Reply = <<"Urusai ", Version/binary, BuildInfo/binary, "\n", ErlVersion/binary, PyVersion/binary>>,
+    {ok, Reply};
 %% Get uptime details
 cmd(<<"u">>, []) ->
     cmd(<<"uptime">>, []);
@@ -54,7 +73,7 @@ cmd(<<"uptime">>, []) ->
             calendar:time_difference(
                 {{list_to_integer(Y), list_to_integer(M), list_to_integer(D)},
                  {list_to_integer(Hh), list_to_integer(Mm), list_to_integer(Ss)}},
-                calendar:now_to_local_time(now()))
+                calendar:now_to_local_time(now()));
         {_, _} ->
             {0, {0, 0, 0}}
     end,
