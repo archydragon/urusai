@@ -152,9 +152,13 @@ owner(<<"help">>, []) ->
     <<"Allowed actions: \n\tlist\n\tadd <JID>\n\tdel <JID>">>;
 owner(<<"list">>, []) ->
     io_lib:format("~p", [urusai_db:get(<<"owners">>)]);
+owner(<<"l">>, []) ->
+    owner(<<"list">>, []);
 owner(<<"add">>, [Jid]) when Jid =/= <<"">> ->
     urusai_db:set(<<"owners">>, lists:usort(lists:append(urusai_db:get(<<"owners">>), [binary_to_list(Jid)]))),
     <<Jid/binary, " added to owners.">>;
+owner(<<"a">>, [Jid]) ->
+    owner(<<"add">>, [Jid]);
 owner(<<"del">>, [Jid]) when Jid =/= <<"">> ->
     case urusai_config:get(common, owner) =:= binary_to_list(Jid) of
         true ->
@@ -163,6 +167,8 @@ owner(<<"del">>, [Jid]) when Jid =/= <<"">> ->
             urusai_db:set(<<"owners">>, lists:delete(binary_to_list(Jid), urusai_db:get(<<"owners">>))),
             <<Jid/binary, " removed from owners.">>
     end;
+owner(<<"d">>, [Jid]) ->
+    owner(<<"del">>, [Jid]);
 owner(_, _) ->
     H = owner(<<"help">>, []),
     <<"Invalid action.\n", H/binary>>.

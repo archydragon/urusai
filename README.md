@@ -21,6 +21,7 @@ External dependencies
   * [cowboy](https://github.com/extend/cowboy)
   * [jsonx](https://github.com/iskra/jsonx)
   * [eredis](https://github.com/wooga/eredis)
+  * [emysql](https://github.com/Eonblast/Emysql)
 
 
 Installation

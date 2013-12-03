@@ -4,6 +4,7 @@
   * Fixed bot behaviour on connection lost
   * ``uptime`` command
   * ``version`` command
+  * MySQL (and other compatible engines like MariaDB or Percona) is supported as database backend
 
 ## 0.0.3
 
