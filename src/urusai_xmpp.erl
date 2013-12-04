@@ -141,28 +141,26 @@ connect() ->
     try
         ?MODULE ! queue_stop_timer,
         {ok, _Stream} = exmpp_session:ConnectMethod(Session, ConnServer, Port),
-        lager:info("Connected.")
-    catch 
-        _:{timeout, _} = R1 ->
-            lager:error("Connection failed: ~p", [R1]),
-            connect();
-        _:{socket_error, _} = R1 ->
-            lager:error("Connection failed: ~p", [R1]),
-            timer:sleep(5000),
-            connect();
-        _:R1 ->
-            lager:error("Error: ~p", [R1])
-    end,
-    try
+        lager:info("Connected."),
         exmpp_session:login(Session),
         lager:info("Logged in."),
         gen_server:cast(?SERVER, {set_session, Session}),
         update_status(),
         muc_autojoin(),
         erlang:send_after(2000, ?MODULE, queue_loop)
-    catch _:{auth_error, _} = R2 ->
-        lager:info("Login error: ~p!", [R2]),
-        init:stop()
+    catch 
+        _:{timeout, _} = Err ->
+            lager:error("Connection failed: ~p", [Err]),
+            connect();
+        _:{socket_error, _} = Err ->
+            lager:error("Connection failed: ~p", [Err]),
+            timer:sleep(5000),
+            connect();
+        _:{auth_error, _} = Err ->
+            lager:info("Login error: ~p!", [Err]),
+            init:stop();
+        _:Err ->
+            lager:error("Error: ~p", [Err])
     end,
     Session.
 
