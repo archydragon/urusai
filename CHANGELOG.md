@@ -5,6 +5,7 @@
   * ``uptime`` command
   * ``version`` command
   * MySQL (and other compatible engines like MariaDB or Percona) is supported as database backend
+  * ``sh`` plugin
 
 ## 0.0.3
 

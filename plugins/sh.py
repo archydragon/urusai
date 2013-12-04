@@ -4,6 +4,7 @@ import urusai_plugin
 import subprocess
 import shlex
 
+# List of allowed base commands (e.g. 'uname -a' cannot be specifically banned in this version)
 ALLOWED = [
     "uname",
     "uptime",
@@ -15,6 +16,7 @@ ALLOWED = [
 class pluginSh(urusai_plugin.MucMessage):
     """
     Shell command execution.
+    Usage: 'sh <COMMAND>' (e.g. 'sh uname -a')
     """
     triggers = { "^sh\s": "Shell" }
 
