@@ -149,18 +149,22 @@ connect() ->
         muc_autojoin(),
         erlang:send_after(2000, ?MODULE, queue_loop)
     catch 
-        _:{timeout, _} = Err ->
+        _:{timeout, {gen_fsm, _, [Pid, _, _]}} = Err ->
             lager:error("Connection failed: ~p", [Err]),
+            catch erlang:exit(Pid, kill),
             connect();
         _:{socket_error, _} = Err ->
             lager:error("Connection failed: ~p", [Err]),
+            exmpp_session:stop(Session),
             timer:sleep(5000),
             connect();
         _:{auth_error, _} = Err ->
             lager:info("Login error: ~p!", [Err]),
             init:stop();
         _:Err ->
-            lager:error("Error: ~p", [Err])
+            lager:error("Error: ~p", [Err]),
+            exmpp_session:stop(Session),
+            connect()
     end,
     Session.
 
