@@ -70,7 +70,8 @@ Send to the bot subscription from JID set as owner in configuration file. Then u
   * ``pl[ugins] r[eload]`` — reload plugins
   * ``g[et] <KEY>`` — get the value of <KEY> field from the database
   * ``e[xec] <COMMAND>`` — execute private message plugin command
-  * ``die`` — kill bot (this command has no shortcut!)
+  * ``restart`` — restart bot (command has no shortcut!)
+  * ``die`` — kill bot (command has no shortcut!)
 
 After the bot joined MUC, the owners of MUC can manage its behaviour sending private messages inside the room:
 

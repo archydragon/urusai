@@ -97,6 +97,9 @@ handle_info(queue_stop_timer, #state{loop_timer = LoopTimer} = State) ->
     {noreply, State};
 handle_info(stop, State) ->
     {stop, normal, State};
+handle_info(restart, State) ->
+    init:restart(),
+    {noreply, State};
 handle_info(die, State) ->
     init:stop(),
     {noreply, State};
