@@ -23,7 +23,8 @@ cmd(<<"help">>, []) ->
         "\t\"pl[ugins] l[ist]\" — list of loaded plugins' triggers information\n",
         "\t\"pl[ugins] r[eload]\" — reload plugins\n",
         "\t\"g[et] <KEY>\" — get the value of <KEY> field from the database\n",
-        "\t\"e[xec] <COMMAND>\" — execute private message plugin command\n"
+        "\t\"e[xec] <COMMAND>\" — execute private message plugin command\n",
+        "\t\"die\" — stop bot\n"
     >>,
     {ok, R};
 cmd(<<"h">>, []) ->
@@ -140,6 +141,9 @@ cmd(<<"exec">>, Cmd) ->
     {ok, io_lib:format("~p", [So])};
 cmd(<<"e">>, Cmd) ->
     cmd(<<"exec">>, Cmd);
+cmd(<<"die">>, []) ->
+    erlang:send_after(1000, urusai_xmpp, die),
+    {ok, <<"Goodbye.">>};
 cmd(_, _) ->
     error.
 
