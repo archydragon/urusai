@@ -5,6 +5,7 @@
   * MUC kick and ban features
   * ``uptime`` command
   * ``version`` command
+  * ``die`` and ``restart`` commands
   * MySQL (and other compatible engines like MariaDB or Percona) is supported as database backend
   * ``sh`` plugin
 

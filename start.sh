@@ -5,4 +5,10 @@ if [ -z $1 ]; then
     exit
 fi
 
-erl -pa ebin -pa deps/*/ebin -config $1 -s urusai
+if [ ! -f "$1.config" ]; then
+    echo "'$1.config' not found"
+    exit
+fi
+
+echo "Starting Urusai using '$1.config'"
+erl -detached -pa ebin -pa deps/*/ebin -config $1 -s urusai
