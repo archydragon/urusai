@@ -66,6 +66,8 @@ Send to the bot subscription from JID set as owner in configuration file. Then u
   * ``m[uc] pj[oin] <MUC_ADDRESS> <PASSWORD>`` — join password protected MUC
   * ``m[uc] l[eave] <MUC_ADDRESS>`` — leave MUC
   * ``m[uc] n[ick] <MUC_ADDRESS>`` — change bot's shown nick for this MUC
+  * ``m[uc] k[ick] <MUC_ADDRESS> <NICK>`` — kick user from MUC
+  * ``m[uc] b[an] <MUC_ADDRESS> <JID>`` — ban JID from MUC
   * ``pl[ugins] l[ist]`` — list of loaded plugins' triggers information
   * ``pl[ugins] r[eload]`` — reload plugins
   * ``g[et] <KEY>`` — get the value of <KEY> field from the database

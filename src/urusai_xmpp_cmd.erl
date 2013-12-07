@@ -20,6 +20,8 @@ cmd(<<"help">>, []) ->
         "\t\"m[uc] pj[oin] <MUC_ADDRESS> <PASSWORD>\" — join password protected MUC\n",
         "\t\"m[uc] l[eave] <MUC_ADDRESS>\" — leave MUC\n",
         "\t\"m[uc] n[ick] <MUC_ADDRESS>\" — change bot's shown nick for this MUC\n",
+        "\t\"m[uc] k[ick] <MUC_ADDRESS> <NICK>\" — kick user from MUC\n",
+        "\t\"m[uc] b[an] <MUC_ADDRESS> <JID>\" — ban JID from MUC\n",
         "\t\"pl[ugins] l[ist]\" — list of loaded plugins' triggers information\n",
         "\t\"pl[ugins] r[eload]\" — reload plugins\n",
         "\t\"g[et] <KEY>\" — get the value of <KEY> field from the database\n",
@@ -108,7 +110,10 @@ cmd(<<"muc">>, [Params]) ->
             gen_server:call(urusai_xmpp, {muc_leave, Muc});
         X when X == <<"nick">> orelse X == <<"n">> ->
             gen_server:call(urusai_xmpp, {muc_nick, Muc, P});
-        % TODO: implement kick and ban triggers ^_^
+        X when X == <<"kick">> orelse X == <<"k">> ->
+            gen_server:call(urusai_xmpp, {muc_kick, Muc, P});
+        X when X == <<"ban">> orelse X == <<"b">> ->
+            gen_server:call(urusai_xmpp, {muc_ban, Muc, P});
         _ ->
             {ok, <<"Bad parameters.">>}
     end;

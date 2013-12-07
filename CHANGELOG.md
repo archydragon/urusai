@@ -2,9 +2,11 @@
 
   * IQ handlers for replying client version and time
   * Fixed bot behaviour on connection lost
+  * MUC kick and ban features
   * ``uptime`` command
   * ``version`` command
   * MySQL (and other compatible engines like MariaDB or Percona) is supported as database backend
+  * ``sh`` plugin
 
 ## 0.0.3
 

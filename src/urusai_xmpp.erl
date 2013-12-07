@@ -59,6 +59,10 @@ handle_call({muc_leave, Muc}, _From, State) ->
     {reply, muc_leave(Muc), State};
 handle_call({muc_nick, Muc, Nick}, _From, State) ->
     {reply, muc_nick(Muc, Nick), State};
+handle_call({muc_kick, Muc, Nick}, _From, State) ->
+    {reply, muc_kick(Muc, Nick, is_moderator(Muc)), State};
+handle_call({muc_ban, Muc, Jid}, _From, State) ->
+    {reply, muc_ban(Muc, Jid, is_admin(Muc)), State};
 handle_call({status, Message}, _From, State) ->
     {reply, status_message(Message), State};
 handle_call({api_message, Target, Body}, _From, State) ->
@@ -143,28 +147,30 @@ connect() ->
     try
         ?MODULE ! queue_stop_timer,
         {ok, _Stream} = exmpp_session:ConnectMethod(Session, ConnServer, Port),
-        lager:info("Connected.")
-    catch 
-        _:{timeout, _} = R1 ->
-            lager:error("Connection failed: ~p", [R1]),
-            connect();
-        _:{socket_error, _} = R1 ->
-            lager:error("Connection failed: ~p", [R1]),
-            timer:sleep(5000),
-            connect();
-        _:R1 ->
-            lager:error("Error: ~p", [R1])
-    end,
-    try
+        lager:info("Connected."),
         exmpp_session:login(Session),
         lager:info("Logged in."),
         gen_server:cast(?SERVER, {set_session, Session}),
         update_status(),
         muc_autojoin(),
         erlang:send_after(2000, ?MODULE, queue_loop)
-    catch _:{auth_error, _} = R2 ->
-        lager:info("Login error: ~p!", [R2]),
-        init:stop()
+    catch 
+        _:{timeout, {gen_fsm, _, [Pid, _, _]}} = Err ->
+            lager:error("Connection failed: ~p", [Err]),
+            catch erlang:exit(Pid, kill),
+            connect();
+        _:{socket_error, _} = Err ->
+            lager:error("Connection failed: ~p", [Err]),
+            exmpp_session:stop(Session),
+            timer:sleep(5000),
+            connect();
+        _:{auth_error, _} = Err ->
+            lager:info("Login error: ~p!", [Err]),
+            init:stop();
+        _:Err ->
+            lager:error("Error: ~p", [Err]),
+            exmpp_session:stop(Session),
+            connect()
     end,
     Session.
 
@@ -258,14 +264,19 @@ handle_private(Packet, false, _, Target, Me) ->
 handle_iq(Packet) ->
     % TODO: implement %)
     Type = exmpp_iq:get_type(Packet),
-    Request = exmpp_iq:get_request(Packet),
-    case exmpp_xml:get_ns_as_atom(Request) of
-        'jabber:iq:version' when Type =:= get ->
-            iq_client_version(Packet);
-        'urn:xmpp:time' when Type =:= get ->
-            iq_time(Packet);
-        Else ->
-            lager:info("Type: ~p Else: ~p", [Type, Else]),
+    case Type of
+        get ->        
+            Request = exmpp_iq:get_request(Packet),
+            case exmpp_xml:get_ns_as_atom(Request) of
+                'jabber:iq:version' ->
+                    iq_client_version(Packet);
+                'urn:xmpp:time' ->
+                    iq_time(Packet);
+                Else ->
+                    lager:info("Type: ~p Else: ~p", [Type, Else]),
+                    ok
+            end;
+        _ ->
             ok
     end,
     ok.
@@ -370,6 +381,21 @@ muc_nick(Muc, [Nick]) ->
     urusai_db:set(<<"muc_nick_", Muc/binary>>, Nick),
     {ok, <<"Presence sent.">>}.
 
+muc_kick(_Muc, _Nick, false) ->
+    {ok, <<"I'm not a moderator there.">>};
+muc_kick(Muc, [Nick], true) ->
+    BareMuc = exmpp_jid:parse(Muc),
+    gen_server:cast(?MODULE, {send_packet, exmpp_client_muc:kick(BareMuc, Nick)}),
+    {ok, <<"Kicked.">>}.
+
+muc_ban(_Muc, _Jid, false) ->
+    {ok, <<"I'm not an administrator there.">>};
+muc_ban(Muc, [Jid], true) ->
+    BareMuc = exmpp_jid:parse(Muc),
+    BareJid = exmpp_jid:parse(Jid),
+    gen_server:cast(?MODULE, {send_packet, exmpp_client_muc:ban(BareMuc, BareJid)}),
+    {ok, <<"Banned.">>}.
+
 muc_autojoin() ->
     [ muc_join(A, [], urusai_db:get(<<"muc_password_", A/binary>>)) || A <- urusai_db:get(<<"autojoin">>) ].
 
@@ -387,7 +413,7 @@ muc_userjoined_save(Conf, Nick, {_Presence, Jid, Affiliation, Role, _NewNick} = 
     },
     muc_presence_match(<<Conf/binary, "/", Nick/binary>>, Jid, Data),
     MucK = <<"muc_users_", Conf/binary>>,
-    urusai_db:set(MucK, lists:append(urusai_db:get(MucK), [User])),
+    urusai_db:set(MucK, lists:append(lists:filter(fun(X) -> X#muc_member.nick =/= Nick end, urusai_db:get(MucK)), [User])),
     ok.
 
 muc_userleft(Conf, Nick, Raw) ->
@@ -566,6 +592,23 @@ is_joined(Jid) ->
     Muc = exmpp_jid:bare_to_binary(exmpp_jid:bare(exmpp_jid:parse(Jid))),
     MUCs = urusai_db:get(<<"autojoin">>),
     lists:member(Muc, MUCs).
+
+%% Am I moderator of this MUC?
+is_moderator(Muc) ->
+    UserList = urusai_db:get(<<"muc_users_", Muc/binary>>),
+    MyNick = urusai_db:get(<<"muc_nick_", Muc/binary>>),
+    [] =/= lists:filter(fun(X) ->
+            X#muc_member.nick =:= MyNick andalso X#muc_member.role =:= <<"moderator">>
+        end, UserList).
+
+%% Am I administrator of this MUC?
+is_admin(Muc) ->
+    UserList = urusai_db:get(<<"muc_users_", Muc/binary>>),
+    MyNick = urusai_db:get(<<"muc_nick_", Muc/binary>>),
+    [] =/= lists:filter(fun(X) ->
+            A = [<<"admin">>, <<"owner">>],
+            X#muc_member.nick =:= MyNick andalso lists:member(X#muc_member.affiliation, A)
+        end, UserList).
 
 %% Update status message trigger
 status_message(Msg) ->
