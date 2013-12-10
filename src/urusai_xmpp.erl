@@ -72,9 +72,6 @@ handle_call({api_plugin, Target, Body}, _From, State) ->
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast({set_session, Session}, State) ->
-    NewState = State#state{session = Session},
-    {noreply, NewState};
 handle_cast({muc_leave, Muc}, State) ->
     timer:sleep(200),
     muc_leave(Muc),
@@ -85,6 +82,12 @@ handle_cast({send_packet, Packet}, #state{queue = Q} = State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+handle_info({'DOWN', _MonitorRef, process, _Pid, _Info}, #state{queue = Q}) ->
+    {noreply, #state{session = connect(), queue = Q}};
+handle_info(after_connected, State) ->
+    update_status(),
+    muc_autojoin(),
+    {noreply, State};
 handle_info(queue_loop, State) ->
     catch erlang:cancel_timer(State#state.loop_timer),
     {Item, NewQueue} = queue:out(State#state.queue),
@@ -135,6 +138,8 @@ connect() ->
     end,
 
     Session = exmpp_session:start(),
+
+    lager:info("Session ID: ~p", [Session]),
     JID = exmpp_jid:make(User, Server, Resource),
     lager:info("Trying to connect as ~s@~s to the server ~s:~B", [User, Server, ConnServer, Port]),
     urusai_db:set(<<"current_jid">>, JID), % required for alerts
@@ -150,9 +155,8 @@ connect() ->
         lager:info("Connected."),
         exmpp_session:login(Session),
         lager:info("Logged in."),
-        gen_server:cast(?SERVER, {set_session, Session}),
-        update_status(),
-        muc_autojoin(),
+        erlang:monitor(process, Session),
+        erlang:send_after(1000, ?MODULE, after_connected),
         erlang:send_after(2000, ?MODULE, queue_loop)
     catch 
         _:{timeout, {gen_fsm, _, [Pid, _, _]}} = Err ->
@@ -497,7 +501,7 @@ alert(Msg) ->
 %% IQ result generator
 make_iq_result(NS, Element, Children) ->
     XMLChildren = [ exmpp_xml:set_cdata(exmpp_xml:element(NS, E, [], []), V) || {E, V} <- Children ],
-    exmpp_xml:set_children(exmpp_xml:element(NS, Element), [XMLChildren]).
+    exmpp_xml:set_children(exmpp_xml:element(NS, Element), XMLChildren).
 
 %% IQ response — client version
 iq_client_version(Request) ->
