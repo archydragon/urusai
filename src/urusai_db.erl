@@ -32,9 +32,11 @@ start_link() ->
     generate_default(),
     L.
 
+-spec set(Key :: binary() | string(), Value :: any()) -> ok | error.
 set(Key, Value) ->
     gen_server:call(?MODULE, {set, Key, Value}).
 
+-spec get(Key :: binary() | string()) -> any().
 get(Key) ->
     gen_server:call(?MODULE, {get, Key}).
 

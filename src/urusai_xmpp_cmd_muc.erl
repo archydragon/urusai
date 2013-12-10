@@ -4,6 +4,7 @@
 
 -export ([cmd/3]).
 
+-spec cmd(Muc :: binary(), Command :: binary(), Params :: list()) -> {ok, binary()} | error.
 cmd(_, <<"help">>, []) ->
     R = <<
   "\t\"h[elp]\" — this help\n",

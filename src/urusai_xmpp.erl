@@ -626,6 +626,7 @@ update_status() ->
     gen_server:cast(?MODULE, {send_packet, exmpp_presence:set_status(exmpp_presence:available(), Msg)}).
 
 %% Version info
+-spec version() -> Version :: binary().
 version() ->
     [{urusai, _, VersionString}] = lists:filter(fun({App, _, _}) -> App =:= urusai end,
         application:loaded_applications()),

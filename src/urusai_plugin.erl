@@ -9,9 +9,9 @@
 -define (pluginTypes, [private, mucmessage, mucpresence]).
 
 -record (plugin, {
-    trigger = <<>>,
-    module = <<>>,
-    method = <<>>
+    trigger = <<>> :: binary(),
+    module :: atom(),
+    method :: atom()
 }).
 
 %% ------------------------------------------------------------------
@@ -37,12 +37,15 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %% Reload plugin module and all Python processes in pool
+-spec reload() -> LoadedPlugins :: list().
 reload() ->
     application:stop(pooler),
     application:start(pooler),
     gen_server:call(?MODULE, reload, 60000).
 
 %% Run Python function execution
+-spec run(Type :: atom(), Module :: atom(), Function :: atom(), Args :: list(), IsPluginEnabled :: boolean()) ->
+    none | [binary()].
 run(Type, _Module, _Function, _Args, false) when Type =:= mucmessage ->
     none;
 run(_Type, Module, Function, Args, _) ->
@@ -56,13 +59,16 @@ run(_Type, Module, Function, Args, _) ->
     end.
 
 %% Get list of loaded plugins
+-spec plugins() -> LoadedPlugsin :: list().
 plugins() ->
     gen_server:call(?MODULE, plugins).
 
+-spec plugins(Type :: atom()) -> LoadedPlugsin :: list().
 plugins(Type) ->
     gen_server:call(?MODULE, {plugins, Type}).
 
 %% Find matching triggers and execute appropriate Python functions
+-spec match(Type :: atom(), From :: binary(), FromJID :: binary() | list(), Values :: [any()]) -> [none | binary()].
 match(_Type, _From, _FromJID, [Value]) when Value =:= undefined ->
     [none];
 match(Type, From, FromJID, [Value]) when is_tuple(Value) andalso Type =:= mucpresence ->

@@ -21,6 +21,7 @@ terminate(_Reason, _Req, _State) ->
     ok.
 
 %% Parse HTTP request
+-spec reply(Req :: cowboy_req:req(), Method :: binary()) -> {Code :: integer(), Msg :: binary()}.
 reply(Req, <<"POST">>) ->
     {ok, ReqBody, _Req} = cowboy_req:body(Req),
     lager:info("Received HTTP API request: ~s", [ReqBody]),
@@ -33,8 +34,8 @@ reply(Req, <<"POST">>) ->
                 [ proplists:get_value(K, Decoded) || K <- [<<"type">>, <<"target">>, <<"body">>] ],
             {Result, Message} = call_xmpp(
                 Type,
-                urusai_config:get(http, allow_private) or
-                lists:member(Target, urusai_db:get(<<"muc_http_enabled">>)),
+                urusai_config:get(http, allow_private)
+                    or lists:member(Target, urusai_db:get(<<"muc_http_enabled">>)),
                 Target,
                 Body
             ),
@@ -44,6 +45,7 @@ reply(_Req, _) ->
     {405, <<>>}.
 
 %% Validate decoded data and try to call XMPP or plugin API
+-spec call_xmpp(Type :: binary(), Allow :: boolean(), Target :: binary(), Body :: binary()) -> {ok | error, binary()}.
 call_xmpp(_Type, _Allow, undefined, _Body) ->
     {error, target_not_set};
 call_xmpp(_Type, _Allow, _Target, undefined) ->

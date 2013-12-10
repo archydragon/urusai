@@ -26,6 +26,7 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
+-spec get(Group :: atom(), Key :: atom()) -> any().
 get(Group, Key) ->
     gen_server:call(?MODULE, {get, Group, Key}).
 
@@ -61,6 +62,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
+-spec default(Group :: atom(), Key :: atom()) -> any().
 default(auth, ssl)           -> false;
 default(auth, port)          -> 5222;
 default(muc, default_nick)   -> "Urusai!";
