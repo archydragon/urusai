@@ -1,7 +1,7 @@
 # PROJECT = urusai
 
 .DEFAULT_GOAL := build
-.PHONY: exmpp deps build clean
+.PHONY: exmpp deps dialyze test build clean
 
 META=.build-meta
 
@@ -11,6 +11,12 @@ exmpp:
 
 deps: exmpp
 	rebar get-deps
+
+dialyze:
+	rebar compile
+	dialyzer ./ebin
+
+test: dialyze
 
 build:
 	date > $(META)

@@ -11,4 +11,4 @@ if [ ! -f "$1.config" ]; then
 fi
 
 echo "Starting Urusai using '$1.config'"
-erl -detached -pa ebin -pa deps/*/ebin -config $1 -s urusai
+erl -detached -heart -pa ebin -pa deps/*/ebin -config $1 -s urusai

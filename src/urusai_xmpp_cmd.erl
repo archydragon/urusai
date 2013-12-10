@@ -5,6 +5,7 @@
 -export ([cmd/2]).
 
 %% Help
+-spec cmd(Command :: binary(), Params :: list()) -> {ok, Reply :: binary()} | error.
 cmd(<<"help">>, []) ->
     R = <<
         "Allowed commands:\n",
@@ -161,6 +162,7 @@ cmd(_, _) ->
 %%% ---------------------------------
 
 %% Owner management
+-spec owner(Command :: binary(), Params :: list()) -> Reply :: binary().
 owner(<<"help">>, []) ->
     <<"Allowed actions: \n\tlist\n\tadd <JID>\n\tdel <JID>">>;
 owner(<<"list">>, []) ->
@@ -187,5 +189,6 @@ owner(_, _) ->
     <<"Invalid action.\n", H/binary>>.
 
 %% Format uptime
+-spec time_fmt({Days :: integer(), {Hours :: integer(), Minutes :: integer(), Seconds :: integer()}}) -> binary().
 time_fmt({Days, {Hours, Minutes, Seconds}}) ->
     list_to_binary(io_lib:format("~b days ~2..0w:~2..0w:~2..0w", [Days, Hours, Minutes, Seconds])).
