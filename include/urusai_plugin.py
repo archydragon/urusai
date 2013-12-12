@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+###  HERE BE DRAGONS
+
 import pyclbr
 import pkgutil
 import re
@@ -5,8 +9,10 @@ from importlib import import_module
 from erlport.erlterms import List, Atom
 from erlport.erlang import call
 
+
 API = Atom("urusai_erlapi")
 PREFIX = "external_"
+
 
 class UrusaiPlugin:
     """
@@ -25,11 +31,13 @@ class UrusaiPlugin:
             out.append((key, triggers[key]))
         return List(out)
 
+
 class Private(UrusaiPlugin):
     """
     Parent class for private messages plugins.
     """
     pass
+
 
 class MucMessage(UrusaiPlugin):
     """
@@ -37,11 +45,15 @@ class MucMessage(UrusaiPlugin):
     """
     pass
 
+
 class MucPresence(UrusaiPlugin):
     """
     Parent class for MUC messages plugins.
     """
     pass
+
+
+# A thin API bridge between Erlang core and Python plugins goes there
 
 def getPluginsE(emodule):
     """
@@ -125,8 +137,7 @@ def getPluginDocs(muc, module):
             pluginType = Atom(plugins[className].super[0].name.lower())
             if (pluginType == "private" and not muc) or (pluginType == "mucmessage"):
                 try:
-                    i = import_module(module)
-                    doc = getattr(i, className).__doc__
+                    doc = getattr(import_module(module), className).__doc__
                     if not doc:
                         doc = ''
                     out.append(doc)

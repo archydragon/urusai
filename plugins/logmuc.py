@@ -5,9 +5,12 @@ import os
 import re
 from datetime import datetime
 
+
 FILE_FMT = "log/chatlog/{0}/{0}_%Y-%m-%d.log"  # {0} will be replaced with MUC name
 STRING_FMT = "[%H:%M:%S] {0}"                  # {0} will be replaced with log element
 
+
+# If file not present, create it and all its parent directories and return its descriptor
 def checkFile(f):
     try:
         with open(f):
@@ -19,10 +22,12 @@ def checkFile(f):
         open(f, 'w').close()
     return open(f, "a+")
 
+# Append the item to file
 def putElement(filename, element):
     f = checkFile(filename)
     f.write(element + "\n")
     f.close()
+
 
 class pluginLogMuc(urusai_plugin.MucMessage):
     """
@@ -38,9 +43,9 @@ class pluginLogMuc(urusai_plugin.MucMessage):
         except ValueError:
             return ''
         now = datetime.now()
-        f = now.strftime(FILE_FMT.format(muc))
-        e = now.strftime(STRING_FMT.format(msg_fmt.format(author, message)))
-        putElement(f, e)
+        target_file = now.strftime(FILE_FMT.format(muc))
+        element = now.strftime(STRING_FMT.format(msg_fmt.format(author, message)))
+        putElement(target_file, element)
         return ''
 
 class pluginLogMucPresences(urusai_plugin.MucPresence):
@@ -71,7 +76,7 @@ class pluginLogMucPresences(urusai_plugin.MucPresence):
             urusai_plugin.dbSet(muc + "_lastrenamed", '')
             return ''
         now = datetime.now()
-        f = now.strftime(FILE_FMT.format(muc))
-        e = now.strftime(STRING_FMT.format(message))
-        putElement(f, e)
+        target_file = now.strftime(FILE_FMT.format(muc))
+        element = now.strftime(STRING_FMT.format(message))
+        putElement(target_file, element)
         return ''

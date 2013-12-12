@@ -6,12 +6,15 @@ import time
 import urllib2
 import lxml.html
 
+
+# format bytes to human-readable format
 def sizeof_fmt(num):
     for x in ['bytes','KB','MB','GB']:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
         num /= 1024.0
-    return "%3.1f%s" % (num, 'TB')
+    return "%3.1f %s" % (num, 'TB')
+
 
 class pluginHttpTitle(urusai_plugin.MucMessage):
     """
@@ -32,6 +35,8 @@ class pluginHttpTitle(urusai_plugin.MucMessage):
             request_time = time.time() - start_time
             return title_fmt.format(title, request_time)
         else:
+            h_type = "unknown"
+            h_size = 0
             for elem in response.info().headers:
                 if "Content-Type" in elem:
                     h_type = elem.strip().split()[1]

@@ -6,8 +6,11 @@ import re
 import pickle
 import random
 
+
 FILE = "var/quotes_{0}.dat"
 
+
+# If file not present, create it and all its parent directories and return its descriptor
 def checkFile(f):
     try:
         with open(f):
@@ -18,6 +21,7 @@ def checkFile(f):
             os.makedirs(d)
         open(f, 'w').close()
 
+# Unserialize data from file
 def read_file(muc):
     qfile = FILE.format(muc)
     checkFile(qfile)
@@ -27,11 +31,13 @@ def read_file(muc):
         except EOFError:
             return []
 
+# Serialize data to file
 def write_file(muc, lines):
     qfile = FILE.format(muc)
     with open(qfile, 'wb') as f:
         pickle.dump(lines, f)
     pass
+
 
 class pluginQuote(urusai_plugin.MucMessage):
     """

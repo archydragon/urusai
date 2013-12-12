@@ -3,6 +3,7 @@
 import urusai_plugin
 import re
 
+
 class pluginHelp(urusai_plugin.MucMessage):
     """
     Information about available modules in this MUC and their usability.
@@ -14,12 +15,12 @@ class pluginHelp(urusai_plugin.MucMessage):
     """
     triggers = {
         "^help$": "List",
-        "^help\s": "Info"
+        "^help\s[0-9a-zA-Z_\.]+": "Info"
     }
 
     @staticmethod
     def triggerList(fromName, fromJid, message):
-        reply_fmt = "Available plugins: {0}\nTo get detailed information about module's possibility use \"help <MODULE>\"."
+        reply_fmt = "Available plugins: {0}\nTo get detailed information about plugin's possibility use \"help <PLUGIN>\"."
         [muc, author] = fromName.split("/", 1)
         plugins = urusai_plugin.getAvailablePlugins(muc)
         return reply_fmt.format(" ".join(plugins))
@@ -32,7 +33,8 @@ class pluginHelp(urusai_plugin.MucMessage):
         if doc:
             return doc
         else:
-            return "There is no any helpful information about " + plugin + "."
+            return "There is no any helpful information about plugin " + plugin + "."
+
 
 class pluginHelpPrivate(urusai_plugin.Private):
     """
@@ -45,12 +47,12 @@ class pluginHelpPrivate(urusai_plugin.Private):
     """
     triggers = {
         "^help$": "List",
-        "^help\s": "Info"
+        "^help\s[0-9a-zA-Z_\.]+": "Info"
     }
 
     @staticmethod
     def triggerList(fromName, fromJid, message):
-        reply_fmt = "Available plugins: {0}\nTo get detailed information about module's possibility use \"help <MODULE>\"."
+        reply_fmt = "Available plugins: {0}\nTo get detailed information about plugin's possibility use \"help <PLUGIN>\"."
         plugins = urusai_plugin.getAvailablePrivPlugins()
         return reply_fmt.format(" ".join(plugins))
 

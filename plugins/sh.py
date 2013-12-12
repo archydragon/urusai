@@ -4,6 +4,7 @@ import urusai_plugin
 import subprocess
 import shlex
 
+
 # List of allowed base commands (e.g. 'uname -a' cannot be specifically banned in this version)
 ALLOWED = [
     "uname",
@@ -12,6 +13,7 @@ ALLOWED = [
     "dig",
     "whois"
 ]
+
 
 class pluginSh(urusai_plugin.MucMessage):
     """
