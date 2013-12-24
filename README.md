@@ -199,11 +199,6 @@ Otherwise the result will be ``"error"`` with the details in ``"message"`` field
   * ``room@conference.server.org/Interlocutor`` — send private message to user Interlocutor from MUC room@
 
 
-TODO
-----
-
-  * more features for plugin returning values
-
 
 License
 -------

@@ -223,7 +223,8 @@ handle_muc_message(Packet, From, false) ->
     Matched = urusai_plugin:match(mucmessage, From, get_real_jid(From), [Command]),
     case lists:filter(fun(X) -> X =/= none end, Matched) of
         []    -> ok;
-        Other -> [gen_server:cast(?MODULE, {send_packet, make_muc_packet(Me, From, E)}) || E <- Other]
+        Other -> [ gen_server:cast(?MODULE, {send_packet, make_muc_packet(Me, From, E)})
+            || E <- muc_plugin_result(From, Other) ]
     end.
 
 %% Private message handler
@@ -460,6 +461,25 @@ muc_presence_match(From, Jid, Data) ->
         []    -> ok;
         Other -> [ gen_server:cast(?MODULE, {send_packet, make_muc_packet(current_jid(), From, E)}) || E <- Other ]
     end.
+
+muc_plugin_result(From, Returned) ->
+    [ case R of
+        _ when is_binary(R) ->
+            R;
+        {<<"mucmessage">>, Body} ->
+            Body;
+        {<<"privmessage">>, Target, Body} ->
+            gen_server:cast(?MODULE, {send_packet, make_private_packet(current_jid(), Target, Body)}),
+            <<"">>;
+        {<<"kick">>, Target} ->
+            gen_server:call(?MODULE, {muc_kick, From, Target}),
+            <<"">>;
+        {<<"ban">>, Target} ->
+            gen_server:call(?MODULE, {muc_ban, From, Target}),
+            <<"">>;
+        _Otherwise ->
+            <<"Some plugin returned bad data.">>
+    end || R <- Returned ].
 
 get_real_jid(MucJid) ->
     case binary:split(MucJid, <<"/">>) of
