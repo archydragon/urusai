@@ -139,7 +139,6 @@ connect() ->
 
     Session = exmpp_session:start(),
 
-    lager:info("Session ID: ~p", [Session]),
     JID = exmpp_jid:make(User, Server, Resource),
     lager:info("Trying to connect as ~s@~s to the server ~s:~B", [User, Server, ConnServer, Port]),
     urusai_db:set(<<"current_jid">>, JID), % required for alerts
@@ -277,8 +276,7 @@ handle_iq(Packet) ->
                     iq_client_version(Packet);
                 'urn:xmpp:time' ->
                     iq_time(Packet);
-                Else ->
-                    lager:info("Type: ~p Else: ~p", [Type, Else]),
+                _Else ->
                     ok
             end;
         _ ->
@@ -472,10 +470,12 @@ muc_plugin_result(From, Returned) ->
             gen_server:cast(?MODULE, {send_packet, make_private_packet(current_jid(), Target, Body)}),
             <<"">>;
         {<<"kick">>, Target} ->
-            gen_server:call(?MODULE, {muc_kick, From, Target}),
+            [Muc, _] = binary:split(From, <<"/">>),
+            gen_server:call(?MODULE, {muc_kick, Muc, [Target]}),
             <<"">>;
         {<<"ban">>, Target} ->
-            gen_server:call(?MODULE, {muc_ban, From, Target}),
+            [Muc, _] = binary:split(From, <<"/">>),
+            gen_server:call(?MODULE, {muc_ban, Muc, [Target]}),
             <<"">>;
         _Otherwise ->
             <<"Some plugin returned bad data.">>

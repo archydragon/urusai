@@ -8,6 +8,7 @@
   * ``version`` command
   * ``die`` and ``restart`` commands
   * MySQL (and other compatible engines like MariaDB or Percona) is supported as database backend
+  * ``censorship`` plugin
   * ``sh`` plugin
 
 ## 0.0.3
