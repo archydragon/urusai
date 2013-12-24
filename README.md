@@ -140,6 +140,13 @@ Trigger method should has three parameters:
     
 Method should return string with the message which will be send back to the user or MUC. If the string is ``''``, nothing will be sent.
 
+If this is ``MucMessage`` plugin, it can also return the following tuples:
+
+  * ``('mucmessage', return_string)`` — just an analog of simple string return, posts the content of ``return_string`` variable to chat
+  * ``('privmessage', target, return_string)`` — sends the content of ``return_string`` to JID in ``target`` variable
+  * ``('kick', target)`` — kicks the user with the nickname from ``target`` variable from MUC
+  * ``('ban', target)`` — bans the user with JID from ``target`` variable from MUC
+
 ```python
     @staticmethod
     def triggerTime(fromName, fromJid, message):

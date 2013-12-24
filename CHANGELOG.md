@@ -3,6 +3,7 @@
   * IQ handlers for replying client version and time
   * Fixed bot behaviour on connection lost
   * MUC kick and ban features
+  * ``privmessage``, ``kick`` and ``ban`` alternative returns for MUC plugins
   * ``uptime`` command
   * ``version`` command
   * ``die`` and ``restart`` commands
