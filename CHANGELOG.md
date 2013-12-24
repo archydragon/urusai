@@ -1,4 +1,8 @@
-## 0.0.4-dev
+## 0.1.1-dev
+
+_Stable 0.1.0 has just released. Stay tuned~_
+
+## 0.1.0
 
   * IQ handlers for replying client version and time
   * Fixed bot behaviour on connection lost
