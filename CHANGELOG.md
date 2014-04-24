@@ -2,6 +2,7 @@
 
   * fix ``help`` plugin for private messages
   * ``currency`` plugin update
+  * ``weather`` plugin
 
 ## 0.1.0
 
