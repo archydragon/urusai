@@ -127,7 +127,7 @@ def getAvailablePrivPlugins():
 def getPluginDocs(muc, module):
     if muc and not module in getAvailablePlugins(muc):
         return "No such module."
-    if not muc and not module in getAvailablePlugins():
+    if not muc and not module in getAvailablePrivPlugins():
         return "No such module."
     plugins = pyclbr.readmodule(module)
     out = []
