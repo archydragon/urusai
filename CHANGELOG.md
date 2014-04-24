@@ -1,6 +1,7 @@
 ## 0.1.1-dev
 
-_Stable 0.1.0 has just released. Stay tuned~_
+  * fix ``help`` plugin for private messages
+  * ``currency`` plugin update
 
 ## 0.1.0
 
