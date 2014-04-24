@@ -18,7 +18,7 @@ class pluginWeather(urusai_plugin.Private):
     @staticmethod
     def triggerWeather(fromName, fj, message):
         api_fmt = "http://api.openweathermap.org/data/2.5/find?q={0}&units=metric&mode=json"
-        response_fmt = "Weather in {0}, {1}: {2}, temperature {3}°C, pressure {4} mm Hg, wind {5} m/s"
+        response_fmt = "Weather in {0}, {1}: {2}, temperature {3}°C, pressure {4} GPa, wind {5} m/s"
         match = re.match(r"^w(eather)?\s+([a-zA-Z\-\.]+)", message)
         if match:
             location = match.group(2)
