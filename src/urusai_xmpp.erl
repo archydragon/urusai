@@ -303,7 +303,6 @@ handle_presence(Packet, _Presence) ->
                 "error" ->
                     M = <<Conf/binary, "@", Serv/binary>>,
                     urusai_db:set(<<"autojoin">>, lists:delete(M, urusai_db:get(<<"autojoin">>))),
-                    alert(<<"Failed to join MUC ", M/binary>>),
                     ok
             end
     end.
