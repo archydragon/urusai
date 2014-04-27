@@ -14,6 +14,7 @@
 -record (state, {
     session,
     queue,
+    ping_timer = [],
     loop_timer = []
 }).
 
@@ -85,9 +86,14 @@ handle_cast(_Msg, State) ->
 handle_info({'DOWN', _MonitorRef, process, _Pid, _Info}, #state{queue = Q}) ->
     {noreply, #state{session = connect(), queue = Q}};
 handle_info(after_connected, State) ->
-    update_status(),
     muc_autojoin(),
     {noreply, State};
+handle_info(ping, State) ->
+    catch erlang:cancel_timer(State#state.ping_timer),
+    update_status(),
+    NewState = State#state{
+        ping_timer = erlang:send_after(60000, ?MODULE, ping)},
+    {noreply, NewState};
 handle_info(queue_loop, State) ->
     catch erlang:cancel_timer(State#state.loop_timer),
     {Item, NewQueue} = queue:out(State#state.queue),
@@ -156,6 +162,7 @@ connect() ->
         lager:info("Logged in."),
         erlang:monitor(process, Session),
         erlang:send_after(1000, ?MODULE, after_connected),
+        erlang:send_after(500,  ?MODULE, ping),
         erlang:send_after(2000, ?MODULE, queue_loop)
     catch 
         _:{timeout, {gen_fsm, _, [Pid, _, _]}} = Err ->
