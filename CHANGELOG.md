@@ -1,6 +1,8 @@
 ## 0.1.1-dev
 
-  * fix ``help`` plugin for private messages
+  * fixed server connection persistency
+  * fixed ``help`` plugin for private messages
+  * removed failed MUC joins notifications (temporary, possible)
   * ``currency`` plugin update
   * ``weather`` plugin
 
