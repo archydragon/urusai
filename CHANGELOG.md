@@ -1,6 +1,7 @@
 ## 0.1.1-dev
 
   * fixed server connection persistency
+  * fixed failure on incorrectly encoded strings sent to HTTP API
   * fixed ``help`` plugin for private messages
   * removed failed MUC joins notifications (temporary, possible)
   * ``currency`` plugin update

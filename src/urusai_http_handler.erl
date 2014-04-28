@@ -53,7 +53,10 @@ call_xmpp(_Type, _Allow, _Target, undefined) ->
 call_xmpp(_Type, false, _Target, _Body) ->
     {error, not_allowed};
 call_xmpp(<<"message">>, true, Target, Body) ->
-    gen_server:call(urusai_xmpp, {api_message, Target, Body});
+    case unicode:characters_to_list(Body) of
+        {error, _, _} -> {error, utf8_messages_only};
+        _Else         -> gen_server:call(urusai_xmpp, {api_message, Target, Body})
+    end;
 call_xmpp(<<"plugin">>, true, Target, Body) ->
     gen_server:call(urusai_xmpp, {api_plugin, Target, Body});
 call_xmpp(_Type, _Allow, _Target, _Body) ->
